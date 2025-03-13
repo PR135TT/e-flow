@@ -4,8 +4,37 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { MapPin, Home, TrendingUp, MessageCircle, Coins, Search } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      toast.success(`Searching for "${searchQuery}"`);
+      // In a real app, this would navigate to search results
+      console.log("Search query:", searchQuery);
+    } else {
+      toast.error("Please enter a search term");
+    }
+  };
+
+  const handleButtonClick = (action: string) => {
+    toast.info(`${action} clicked`);
+    console.log(`${action} clicked`);
+    // In a real app, these would navigate to the respective pages
+  };
+
+  const handleNavLinkClick = (destination: string) => {
+    toast.info(`Navigating to ${destination}`);
+    console.log(`Navigating to ${destination}`);
+    // In a real app, this would use navigate() to go to the destination
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -18,15 +47,17 @@ const Index = () => {
           <p className="text-xl md:text-2xl mb-8 max-w-2xl">
             Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
           </p>
-          <div className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
+          <form onSubmit={handleSearch} className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
             <Input 
               className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
               placeholder="Search by location, property type, or price..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <Button className="bg-yellow-500 hover:bg-yellow-600 text-black">
+            <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
               <Search className="mr-2 h-4 w-4" /> Search Properties
             </Button>
-          </div>
+          </form>
         </div>
       </section>
 
@@ -35,7 +66,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Platform</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleButtonClick("Comprehensive Listings")}>
               <CardHeader>
                 <Home className="h-10 w-10 text-blue-600 mb-2" />
                 <CardTitle>Comprehensive Listings</CardTitle>
@@ -43,7 +74,7 @@ const Index = () => {
               </CardHeader>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleButtonClick("Market Analytics")}>
               <CardHeader>
                 <TrendingUp className="h-10 w-10 text-green-600 mb-2" />
                 <CardTitle>Market Analytics</CardTitle>
@@ -51,7 +82,7 @@ const Index = () => {
               </CardHeader>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleButtonClick("Interactive Maps")}>
               <CardHeader>
                 <MapPin className="h-10 w-10 text-red-600 mb-2" />
                 <CardTitle>Interactive Maps</CardTitle>
@@ -59,7 +90,7 @@ const Index = () => {
               </CardHeader>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleButtonClick("Direct Communication")}>
               <CardHeader>
                 <MessageCircle className="h-10 w-10 text-purple-600 mb-2" />
                 <CardTitle>Direct Communication</CardTitle>
@@ -79,12 +110,15 @@ const Index = () => {
               Get rewarded for contributing property data, writing reviews, and engaging with our platform. 
               Our token system provides real value for your participation.
             </p>
-            <Button className="bg-black hover:bg-gray-800 text-white">
+            <Button 
+              className="bg-black hover:bg-gray-800 text-white"
+              onClick={() => handleButtonClick("Learn About Tokens")}
+            >
               <Coins className="mr-2 h-4 w-4" /> Learn About Tokens
             </Button>
           </div>
           <div className="md:w-1/2 flex justify-center">
-            <Card className="w-64 h-64 flex items-center justify-center bg-white/90 backdrop-blur-sm">
+            <Card className="w-64 h-64 flex items-center justify-center bg-white/90 backdrop-blur-sm cursor-pointer" onClick={() => handleButtonClick("Property Tokens")}>
               <CardContent>
                 <Coins className="h-24 w-24 text-yellow-500 mx-auto" />
                 <p className="text-center mt-4 font-bold text-lg">Property Tokens</p>
@@ -102,7 +136,7 @@ const Index = () => {
             <CarouselContent>
               {[1, 2, 3, 4, 5].map((item) => (
                 <CarouselItem key={item} className="md:basis-1/2 lg:basis-1/3">
-                  <Card>
+                  <Card className="cursor-pointer" onClick={() => handleButtonClick(`View Property ${item}`)}>
                     <div className="h-48 bg-gray-200 rounded-t-lg overflow-hidden">
                       <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
                         <Home className="h-12 w-12" />
@@ -121,7 +155,16 @@ const Index = () => {
                       </div>
                     </CardContent>
                     <CardFooter>
-                      <Button variant="outline" className="w-full">View Details</Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleButtonClick(`View Details of Property ${item}`);
+                        }}
+                      >
+                        View Details
+                      </Button>
                     </CardFooter>
                   </Card>
                 </CarouselItem>
@@ -149,7 +192,7 @@ const Index = () => {
               Our platform provides comprehensive market analytics to help you make informed investment decisions.
               Track price trends, compare neighborhoods, and identify high-potential areas.
             </p>
-            <Button>Explore Market Data</Button>
+            <Button onClick={() => handleButtonClick("Explore Market Data")}>Explore Market Data</Button>
           </div>
         </div>
       </section>
@@ -162,10 +205,17 @@ const Index = () => {
             Join thousands of users who trust E Flow for reliable Nigerian real estate data
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="bg-yellow-500 hover:bg-yellow-600 text-black text-lg px-8 py-6">
+            <Button 
+              className="bg-yellow-500 hover:bg-yellow-600 text-black text-lg px-8 py-6"
+              onClick={() => handleButtonClick("Sign Up")}
+            >
               Sign Up Now
             </Button>
-            <Button variant="outline" className="text-white border-white hover:bg-white/10 text-lg px-8 py-6">
+            <Button 
+              variant="outline" 
+              className="text-white border-white hover:bg-white/10 text-lg px-8 py-6"
+              onClick={() => handleButtonClick("Learn More")}
+            >
               Learn More
             </Button>
           </div>
@@ -183,18 +233,18 @@ const Index = () => {
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Home</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Properties</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Analytics</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Token System</a></li>
+                <li><button onClick={() => handleNavLinkClick("Home")} className="text-gray-400 hover:text-white">Home</button></li>
+                <li><button onClick={() => handleNavLinkClick("Properties")} className="text-gray-400 hover:text-white">Properties</button></li>
+                <li><button onClick={() => handleNavLinkClick("Analytics")} className="text-gray-400 hover:text-white">Analytics</button></li>
+                <li><button onClick={() => handleNavLinkClick("Token System")} className="text-gray-400 hover:text-white">Token System</button></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Resources</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Market Reports</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Help Center</a></li>
+                <li><button onClick={() => handleNavLinkClick("Blog")} className="text-gray-400 hover:text-white">Blog</button></li>
+                <li><button onClick={() => handleNavLinkClick("Market Reports")} className="text-gray-400 hover:text-white">Market Reports</button></li>
+                <li><button onClick={() => handleNavLinkClick("Help Center")} className="text-gray-400 hover:text-white">Help Center</button></li>
               </ul>
             </div>
             <div>
