@@ -7,6 +7,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,8 +17,7 @@ const Index = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       toast.success(`Searching for "${searchQuery}"`);
-      // In a real app, this would navigate to search results
-      console.log("Search query:", searchQuery);
+      navigate('/properties');
     } else {
       toast.error("Please enter a search term");
     }
@@ -26,13 +26,43 @@ const Index = () => {
   const handleButtonClick = (action: string) => {
     toast.info(`${action} clicked`);
     console.log(`${action} clicked`);
-    // In a real app, these would navigate to the respective pages
+    
+    // Navigate based on the action
+    if (action === "Comprehensive Listings") {
+      navigate('/properties');
+    } else if (action === "Market Analytics") {
+      navigate('/analytics');
+    } else if (action === "Interactive Maps") {
+      navigate('/properties');
+    } else if (action === "Direct Communication") {
+      navigate('/properties');
+    } else if (action.includes("Property")) {
+      navigate('/properties');
+    } else if (action === "Learn About Tokens" || action === "Property Tokens") {
+      navigate('/tokens');
+    } else if (action === "Explore Market Data") {
+      navigate('/analytics');
+    } else if (action === "Sign Up" || action === "Learn More") {
+      toast.info("Sign up functionality coming soon");
+    }
   };
 
   const handleNavLinkClick = (destination: string) => {
-    toast.info(`Navigating to ${destination}`);
-    console.log(`Navigating to ${destination}`);
-    // In a real app, this would use navigate() to go to the destination
+    if (destination === "Home") {
+      navigate('/');
+    } else if (destination === "Properties") {
+      navigate('/properties');
+    } else if (destination === "Analytics") {
+      navigate('/analytics');
+    } else if (destination === "Token System") {
+      navigate('/tokens');
+    } else if (destination === "Blog") {
+      navigate('/blog');
+    } else if (destination === "Market Reports") {
+      navigate('/analytics');
+    } else if (destination === "Help Center") {
+      toast.info("Help Center coming soon");
+    }
   };
 
   return (
@@ -233,17 +263,17 @@ const Index = () => {
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li><button onClick={() => handleNavLinkClick("Home")} className="text-gray-400 hover:text-white">Home</button></li>
-                <li><button onClick={() => handleNavLinkClick("Properties")} className="text-gray-400 hover:text-white">Properties</button></li>
-                <li><button onClick={() => handleNavLinkClick("Analytics")} className="text-gray-400 hover:text-white">Analytics</button></li>
-                <li><button onClick={() => handleNavLinkClick("Token System")} className="text-gray-400 hover:text-white">Token System</button></li>
+                <li><Link to="/" className="text-gray-400 hover:text-white">Home</Link></li>
+                <li><Link to="/properties" className="text-gray-400 hover:text-white">Properties</Link></li>
+                <li><Link to="/analytics" className="text-gray-400 hover:text-white">Analytics</Link></li>
+                <li><Link to="/tokens" className="text-gray-400 hover:text-white">Token System</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Resources</h4>
               <ul className="space-y-2">
-                <li><button onClick={() => handleNavLinkClick("Blog")} className="text-gray-400 hover:text-white">Blog</button></li>
-                <li><button onClick={() => handleNavLinkClick("Market Reports")} className="text-gray-400 hover:text-white">Market Reports</button></li>
+                <li><Link to="/blog" className="text-gray-400 hover:text-white">Blog</Link></li>
+                <li><Link to="/analytics" className="text-gray-400 hover:text-white">Market Reports</Link></li>
                 <li><button onClick={() => handleNavLinkClick("Help Center")} className="text-gray-400 hover:text-white">Help Center</button></li>
               </ul>
             </div>
