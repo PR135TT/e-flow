@@ -159,7 +159,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Find Your Perfect Property?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of users who trust our platform for reliable Nigerian real estate data
+            Join thousands of users who trust E Flow for reliable Nigerian real estate data
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button className="bg-yellow-500 hover:bg-yellow-600 text-black text-lg px-8 py-6">
@@ -177,7 +177,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Nigerian Real Estate</h3>
+              <h3 className="text-xl font-bold mb-4">E Flow</h3>
               <p className="text-gray-400">The go-to platform for transparent real estate data in Nigeria</p>
             </div>
             <div>
@@ -201,13 +201,13 @@ const Index = () => {
               <h4 className="font-bold mb-4">Contact</h4>
               <ul className="space-y-2">
                 <li className="text-gray-400">Lagos, Nigeria</li>
-                <li className="text-gray-400">info@nigerianrealestate.com</li>
+                <li className="text-gray-400">info@eflow.com</li>
                 <li className="text-gray-400">+234 123 456 7890</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
-            <p>&copy; {new Date().getFullYear()} Nigerian Real Estate. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} E Flow. All rights reserved.</p>
           </div>
         </div>
       </footer>
