@@ -35,7 +35,7 @@ const Index = () => {
     } else if (action === "Interactive Maps") {
       navigate('/properties');
     } else if (action === "Direct Communication") {
-      navigate('/properties');
+      navigate('/directory');
     } else if (action.includes("Property")) {
       navigate('/properties');
     } else if (action === "Learn About Tokens" || action === "Property Tokens") {
