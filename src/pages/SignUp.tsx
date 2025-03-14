@@ -1,4 +1,3 @@
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -85,11 +84,25 @@ const SignUp = () => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
+        options: {
+          data: {
+            name: values.name,
+            phone: values.phone,
+            location: values.location,
+            user_type: values.userType,
+            company: values.company || null,
+          }
+        }
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
       
       if (authData.user) {
+        console.log("Auth successful, user created:", authData.user);
+        
         // Create a user profile in the users table
         const { error: profileError } = await supabase
           .from('users')
@@ -99,19 +112,22 @@ const SignUp = () => {
             email: values.email,
             phone: values.phone,
             location: values.location,
-            user_type: values.userType as 'buyer' | 'seller' | 'agent',
-            company: values.company,
+            user_type: values.userType,
+            company: values.company || null,
             tokens: 0, // Start with 0 tokens
           });
           
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw profileError;
+        }
         
         toast.success("Account created successfully! You can now log in.");
         navigate("/");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error("An error occurred during registration. Please try again.");
+      toast.error(error.message || "An error occurred during registration. Please try again.");
     } finally {
       setIsLoading(false);
     }

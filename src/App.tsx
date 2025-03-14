@@ -24,6 +24,7 @@ export const AuthContext = createContext<{
   session: null,
 });
 
+// Create the query client here instead of inside the component
 const queryClient = new QueryClient();
 
 const App = () => {
