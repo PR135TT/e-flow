@@ -24,7 +24,6 @@ const Index = () => {
   };
 
   const handleButtonClick = (action: string) => {
-    toast.info(`${action} clicked`);
     console.log(`${action} clicked`);
     
     // Navigate based on the action
@@ -42,8 +41,10 @@ const Index = () => {
       navigate('/tokens');
     } else if (action === "Explore Market Data") {
       navigate('/analytics');
-    } else if (action === "Sign Up" || action === "Learn More") {
-      toast.info("Sign up functionality coming soon");
+    } else if (action === "Sign Up") {
+      navigate('/signup');
+    } else if (action === "Learn More") {
+      toast.info("Learn more functionality coming soon");
     }
   };
 

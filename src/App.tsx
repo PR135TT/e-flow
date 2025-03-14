@@ -10,6 +10,7 @@ import Analytics from "./pages/Analytics";
 import Tokens from "./pages/Tokens";
 import Blog from "./pages/Blog";
 import Directory from "./pages/Directory";
+import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/tokens" element={<Tokens />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/directory" element={<Directory />} />
+          <Route path="/signup" element={<SignUp />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
