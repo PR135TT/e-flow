@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+import type { Database } from "./database.types";
 
 // Database types
 export interface User {
@@ -51,65 +53,220 @@ export interface PropertySubmission {
   createdAt: Date;
 }
 
-// Mock data
-const mockAgents: User[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@eflow.com',
-    phone: '+234 123 456 7890',
-    location: 'Lagos',
-    type: 'agent',
-    company: 'Lagos Realty',
-    tokens: 450,
-    createdAt: new Date('2023-01-15')
+// Supabase database operations
+export const db = {
+  // User operations
+  getUsers: async () => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*');
+      
+    if (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
+    
+    return data.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      location: user.location,
+      type: user.user_type,
+      company: user.company,
+      tokens: user.tokens,
+      createdAt: new Date(user.created_at)
+    } as User));
   },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@eflow.com',
-    phone: '+234 987 654 3210',
-    location: 'Abuja',
-    type: 'agent',
-    company: 'Capital Properties',
-    tokens: 720,
-    createdAt: new Date('2023-03-20')
+  
+  getUserById: async (id: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching user:', error);
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      location: data.location,
+      type: data.user_type,
+      company: data.company,
+      tokens: data.tokens,
+      createdAt: new Date(data.created_at)
+    } as User;
   },
-  {
-    id: '3',
-    name: 'Michael Okonkwo',
-    email: 'michael.o@eflow.com',
-    phone: '+234 555 123 4567',
-    location: 'Port Harcourt',
-    type: 'agent',
-    company: 'Riverside Homes',
-    tokens: 380,
-    createdAt: new Date('2023-05-10')
+  
+  getUsersByType: async (type: 'agent' | 'buyer' | 'seller') => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_type', type);
+      
+    if (error) {
+      console.error('Error fetching users by type:', error);
+      return [];
+    }
+    
+    return data.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      location: user.location,
+      type: user.user_type,
+      company: user.company,
+      tokens: user.tokens,
+      createdAt: new Date(user.created_at)
+    } as User));
   },
-  {
-    id: '4',
-    name: 'Fatima Ahmed',
-    email: 'fatima.a@eflow.com',
-    phone: '+234 777 888 9999',
-    location: 'Kano',
-    type: 'agent',
-    company: 'Northern Estates',
-    tokens: 530,
-    createdAt: new Date('2023-06-05')
+  
+  // Directory data - used by the Directory page
+  getDirectoryData: async (type: string, searchQuery: string = '') => {
+    if (type === 'agents') {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('user_type', 'agent')
+        .ilike(searchQuery ? 'name' : 'id', searchQuery ? `%${searchQuery}%` : '%');
+        
+      if (error) {
+        console.error('Error fetching agents:', error);
+        return [];
+      }
+      
+      return data.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        location: user.location,
+        type: user.user_type,
+        company: user.company,
+        tokens: user.tokens,
+        createdAt: new Date(user.created_at)
+      }));
+    } else if (type === 'companies') {
+      // For demonstration, using static data since we don't have a companies table yet
+      return mockCompanies;
+    } else if (type === 'buyers-sellers') {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .in('user_type', ['buyer', 'seller'])
+        .ilike(searchQuery ? 'name' : 'id', searchQuery ? `%${searchQuery}%` : '%');
+        
+      if (error) {
+        console.error('Error fetching buyers/sellers:', error);
+        return [];
+      }
+      
+      return data.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        location: user.location,
+        type: user.user_type,
+        company: user.company,
+        tokens: user.tokens,
+        createdAt: new Date(user.created_at)
+      }));
+    }
+    
+    return [];
   },
-  {
-    id: '5',
-    name: 'David Adeyemi',
-    email: 'david.a@eflow.com',
-    phone: '+234 333 444 5555',
-    location: 'Ibadan',
-    type: 'agent',
-    company: 'Western Realty',
-    tokens: 610,
-    createdAt: new Date('2023-07-12')
+  
+  // Token system
+  incrementUserTokens: async (userId: string, tokensToAdd: number) => {
+    // First, get the current token count
+    const { data: userData, error: fetchError } = await supabase
+      .from('users')
+      .select('tokens')
+      .eq('id', userId)
+      .single();
+      
+    if (fetchError) {
+      console.error('Error fetching user tokens:', fetchError);
+      return null;
+    }
+    
+    const newTokenAmount = (userData.tokens || 0) + tokensToAdd;
+    
+    // Update the token count
+    const { data, error } = await supabase
+      .from('users')
+      .update({ tokens: newTokenAmount })
+      .eq('id', userId)
+      .select('tokens')
+      .single();
+      
+    if (error) {
+      console.error('Error updating user tokens:', error);
+      return null;
+    }
+    
+    return data.tokens;
+  },
+  
+  submitPropertyInfo: async (userId: string, propertyData: Partial<Property>) => {
+    // Calculate token reward based on how complete the property data is
+    let completenessScore = 0;
+    let possibleFields = 0;
+    
+    for (const key in propertyData) {
+      possibleFields++;
+      if (propertyData[key as keyof Partial<Property>] !== undefined) {
+        completenessScore++;
+      }
+    }
+    
+    // Base tokens (10) + bonus for complete information
+    const completenessPercentage = possibleFields > 0 ? completenessScore / possibleFields : 0;
+    const tokensAwarded = Math.floor(10 + (completenessPercentage * 40)); // 10-50 tokens
+    
+    // Insert a mock property for now (in a real app, we'd create a properties table entry)
+    const propertyId = `property_${Date.now()}`;
+    
+    // Create a property submission record
+    const { data: submissionData, error: submissionError } = await supabase
+      .from('property_submissions')
+      .insert({
+        property_id: propertyId,
+        user_id: userId,
+        status: 'approved', // Auto-approve for demo
+        tokens_awarded: tokensAwarded
+      })
+      .select()
+      .single();
+      
+    if (submissionError) {
+      console.error('Error creating property submission:', submissionError);
+      return null;
+    }
+    
+    // Update user's tokens
+    await db.incrementUserTokens(userId, tokensAwarded);
+    
+    return {
+      id: submissionData.id,
+      propertyId: submissionData.property_id,
+      userId: submissionData.user_id,
+      status: submissionData.status,
+      tokensAwarded: submissionData.tokens_awarded,
+      createdAt: new Date(submissionData.created_at)
+    } as PropertySubmission;
   }
-];
+};
 
+// Mock companies for now
 const mockCompanies: Company[] = [
   {
     id: '1',
@@ -162,166 +319,3 @@ const mockCompanies: Company[] = [
     createdAt: new Date('2020-07-10')
   }
 ];
-
-const mockBuyers: User[] = [
-  {
-    id: '6',
-    name: 'Adeola Williams',
-    email: 'adeola.w@gmail.com',
-    phone: '+234 111 222 3333',
-    location: 'Lagos',
-    type: 'buyer',
-    tokens: 150,
-    createdAt: new Date('2023-08-21')
-  },
-  {
-    id: '7',
-    name: 'Ibrahim Musa',
-    email: 'ibrahim.m@gmail.com',
-    phone: '+234 444 555 6666',
-    location: 'Kaduna',
-    type: 'buyer',
-    tokens: 90,
-    createdAt: new Date('2023-09-13')
-  },
-  {
-    id: '8',
-    name: 'Chioma Eze',
-    email: 'chioma.e@gmail.com',
-    phone: '+234 777 888 9999',
-    location: 'Enugu',
-    type: 'buyer',
-    tokens: 120,
-    createdAt: new Date('2023-10-05')
-  }
-];
-
-const mockSellers: User[] = [
-  {
-    id: '9',
-    name: 'Mohammed Ali',
-    email: 'mohammed.a@gmail.com',
-    phone: '+234 222 333 4444',
-    location: 'Jos',
-    type: 'seller',
-    tokens: 280,
-    createdAt: new Date('2023-07-17')
-  },
-  {
-    id: '10',
-    name: 'Grace Okafor',
-    email: 'grace.o@gmail.com',
-    phone: '+234 555 666 7777',
-    location: 'Owerri',
-    type: 'seller',
-    tokens: 320,
-    createdAt: new Date('2023-08-29')
-  },
-  {
-    id: '11',
-    name: 'Yusuf Ibrahim',
-    email: 'yusuf.i@gmail.com',
-    phone: '+234 888 999 0000',
-    location: 'Sokoto',
-    type: 'seller',
-    tokens: 190,
-    createdAt: new Date('2023-09-11')
-  }
-];
-
-// Mock database operations
-export const db = {
-  // User operations
-  getUsers: () => {
-    return [...mockAgents, ...mockBuyers, ...mockSellers];
-  },
-  
-  getUserById: (id: string) => {
-    return [...mockAgents, ...mockBuyers, ...mockSellers].find(user => user.id === id);
-  },
-  
-  getUsersByType: (type: 'agent' | 'buyer' | 'seller') => {
-    return [...mockAgents, ...mockBuyers, ...mockSellers].filter(user => user.type === type);
-  },
-  
-  // Company operations
-  getCompanies: () => {
-    return mockCompanies;
-  },
-  
-  getCompanyById: (id: string) => {
-    return mockCompanies.find(company => company.id === id);
-  },
-  
-  // Directory data - used by the Directory page
-  getDirectoryData: (type: string, searchQuery: string = '') => {
-    let data: any[] = [];
-    
-    if (type === 'agents') {
-      data = mockAgents;
-    } else if (type === 'companies') {
-      data = mockCompanies;
-    } else if (type === 'buyers-sellers') {
-      data = [...mockBuyers, ...mockSellers];
-    }
-    
-    // Apply search filter if provided
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return data.filter(item => 
-        item.name.toLowerCase().includes(query) || 
-        item.location.toLowerCase().includes(query) ||
-        ('company' in item && item.company?.toLowerCase().includes(query))
-      );
-    }
-    
-    return data;
-  },
-  
-  // Token system
-  incrementUserTokens: (userId: string, tokensToAdd: number) => {
-    const allUsers = [...mockAgents, ...mockBuyers, ...mockSellers];
-    const user = allUsers.find(u => u.id === userId);
-    
-    if (user) {
-      user.tokens += tokensToAdd;
-      return user.tokens;
-    }
-    
-    return null;
-  },
-  
-  submitPropertyInfo: (userId: string, propertyData: Partial<Property>) => {
-    // In a real app, this would validate and store the submission
-    // For now, award tokens based on the quality of the submission
-    
-    // Calculate token reward based on how complete the property data is
-    let completenessScore = 0;
-    let possibleFields = 0;
-    
-    for (const key in propertyData) {
-      possibleFields++;
-      if (propertyData[key as keyof Partial<Property>] !== undefined) {
-        completenessScore++;
-      }
-    }
-    
-    // Base tokens (10) + bonus for complete information
-    const completenessPercentage = possibleFields > 0 ? completenessScore / possibleFields : 0;
-    const tokensAwarded = Math.floor(10 + (completenessPercentage * 40)); // 10-50 tokens
-    
-    const submission: PropertySubmission = {
-      id: `sub_${Date.now()}`,
-      propertyId: `prop_${Date.now()}`,
-      userId,
-      status: 'approved', // Auto-approve for demo
-      tokensAwarded,
-      createdAt: new Date()
-    };
-    
-    // Update user's tokens
-    db.incrementUserTokens(userId, tokensAwarded);
-    
-    return submission;
-  }
-};

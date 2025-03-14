@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { db } from "@/lib/database";
+import { supabase } from "@/lib/supabase";
 
 // Form validation schema
 const formSchema = z.object({
@@ -81,12 +81,34 @@ const SignUp = () => {
     try {
       console.log("Form values:", values);
       
-      // In a real app, we would send this data to an API
-      // For now, we'll simulate a successful registration
-      setTimeout(() => {
+      // Register user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+      });
+      
+      if (authError) throw authError;
+      
+      if (authData.user) {
+        // Create a user profile in the users table
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            name: values.name,
+            email: values.email,
+            phone: values.phone,
+            location: values.location,
+            user_type: values.userType as 'buyer' | 'seller' | 'agent',
+            company: values.company,
+            tokens: 0, // Start with 0 tokens
+          });
+          
+        if (profileError) throw profileError;
+        
         toast.success("Account created successfully! You can now log in.");
         navigate("/");
-      }, 1500);
+      }
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("An error occurred during registration. Please try again.");
