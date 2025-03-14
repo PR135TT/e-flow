@@ -293,8 +293,22 @@ export const db = {
   
   submitPropertyInfo: (userId: string, propertyData: Partial<Property>) => {
     // In a real app, this would validate and store the submission
-    // For now, automatically reward user with tokens for demonstration
-    const tokensAwarded = Math.floor(Math.random() * 50) + 10; // Random between 10-60
+    // For now, award tokens based on the quality of the submission
+    
+    // Calculate token reward based on how complete the property data is
+    let completenessScore = 0;
+    let possibleFields = 0;
+    
+    for (const key in propertyData) {
+      possibleFields++;
+      if (propertyData[key as keyof Partial<Property>] !== undefined) {
+        completenessScore++;
+      }
+    }
+    
+    // Base tokens (10) + bonus for complete information
+    const completenessPercentage = possibleFields > 0 ? completenessScore / possibleFields : 0;
+    const tokensAwarded = Math.floor(10 + (completenessPercentage * 40)); // 10-50 tokens
     
     const submission: PropertySubmission = {
       id: `sub_${Date.now()}`,

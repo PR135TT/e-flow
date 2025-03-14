@@ -1,10 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MapPin, Home, Search } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 const Properties = () => {
@@ -13,15 +11,11 @@ const Properties = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      toast.success(`Searching for "${searchQuery}"`);
       console.log("Search query:", searchQuery);
-    } else {
-      toast.error("Please enter a search term");
     }
   };
 
   const handleViewDetails = (propertyId: number) => {
-    toast.info(`Viewing details for Property ${propertyId}`);
     console.log(`Viewing details for Property ${propertyId}`);
   };
 

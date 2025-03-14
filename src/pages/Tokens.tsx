@@ -1,13 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Award, Star, Users, ArrowRight, Shield, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 
 const Tokens = () => {
   const handleButtonClick = (action: string) => {
-    toast.info(`${action} clicked`);
     console.log(`${action} clicked`);
   };
 
