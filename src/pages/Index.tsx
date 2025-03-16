@@ -43,6 +43,8 @@ const Index = () => {
       navigate('/analytics');
     } else if (action === "Sign Up") {
       navigate('/signup');
+    } else if (action === "Sign In") {
+      navigate('/signup');
     } else if (action === "Learn More") {
       toast.info("Learn more functionality coming soon");
     }
@@ -73,7 +75,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 container mx-auto px-4 h-full flex flex-col justify-center items-start">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            Nigeria's Premier <span className="text-yellow-400">Real Estate</span> Platform
+            Euron <span className="text-yellow-400">Estate</span>
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-2xl">
             Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
@@ -168,10 +170,8 @@ const Index = () => {
               {[1, 2, 3, 4, 5].map((item) => (
                 <CarouselItem key={item} className="md:basis-1/2 lg:basis-1/3">
                   <Card className="cursor-pointer" onClick={() => handleButtonClick(`View Property ${item}`)}>
-                    <div className="h-48 bg-gray-200 rounded-t-lg overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
-                        <Home className="h-12 w-12" />
-                      </div>
+                    <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+                      <Home className="h-12 w-12" />
                     </div>
                     <CardHeader>
                       <CardTitle>Luxury Villa {item}</CardTitle>
@@ -217,7 +217,6 @@ const Index = () => {
             <h3 className="text-xl font-bold mb-4">Property Price Trends in Lagos</h3>
             <div className="h-64 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
               <TrendingUp className="h-12 w-12 text-blue-500" />
-              <span className="ml-2 text-gray-500">Analytics Visualization Coming Soon</span>
             </div>
             <p className="text-gray-600 mb-4">
               Our platform provides comprehensive market analytics to help you make informed investment decisions.
@@ -233,7 +232,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Find Your Perfect Property?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of users who trust E Flow for reliable Nigerian real estate data
+            Join thousands of users who trust Euron Estate for reliable Nigerian real estate data
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -245,9 +244,9 @@ const Index = () => {
             <Button 
               variant="outline" 
               className="text-white border-white hover:bg-white/10 text-lg px-8 py-6"
-              onClick={() => handleButtonClick("Learn More")}
+              onClick={() => handleButtonClick("Sign In")}
             >
-              Learn More
+              Sign In
             </Button>
           </div>
         </div>
@@ -258,7 +257,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">E Flow</h3>
+              <h3 className="text-xl font-bold mb-4">Euron Estate</h3>
               <p className="text-gray-400">The go-to platform for transparent real estate data in Nigeria</p>
             </div>
             <div>
@@ -282,13 +281,13 @@ const Index = () => {
               <h4 className="font-bold mb-4">Contact</h4>
               <ul className="space-y-2">
                 <li className="text-gray-400">Lagos, Nigeria</li>
-                <li className="text-gray-400">info@eflow.com</li>
+                <li className="text-gray-400">info@euronestate.com</li>
                 <li className="text-gray-400">+234 123 456 7890</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
-            <p>&copy; {new Date().getFullYear()} E Flow. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Euron Estate. All rights reserved.</p>
           </div>
         </div>
       </footer>
