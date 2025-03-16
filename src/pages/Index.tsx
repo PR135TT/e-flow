@@ -4,14 +4,34 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { MapPin, Home, TrendingUp, MessageCircle, Coins, Search } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { getPropertiesByQuery } from "@/lib/database";
+import { PropertyType } from "@/lib/database.types";
 
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredProperties, setFeaturedProperties] = useState<PropertyType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedProperties = async () => {
+      try {
+        setIsLoading(true);
+        const properties = await getPropertiesByQuery({ limit: 5 });
+        setFeaturedProperties(properties);
+      } catch (error) {
+        console.error("Error fetching featured properties:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeaturedProperties();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +86,11 @@ const Index = () => {
     } else if (destination === "Help Center") {
       toast.info("Help Center coming soon");
     }
+  };
+
+  // Format price with naira symbol and commas
+  const formatPrice = (price: number) => {
+    return `₦${price.toLocaleString()}`;
   };
 
   return (
@@ -165,47 +190,57 @@ const Index = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Featured Properties</h2>
-          <Carousel className="w-full max-w-5xl mx-auto">
-            <CarouselContent>
-              {[1, 2, 3, 4, 5].map((item) => (
-                <CarouselItem key={item} className="md:basis-1/2 lg:basis-1/3">
-                  <Card className="cursor-pointer" onClick={() => handleButtonClick(`View Property ${item}`)}>
-                    <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
-                      <Home className="h-12 w-12" />
-                    </div>
-                    <CardHeader>
-                      <CardTitle>Luxury Villa {item}</CardTitle>
-                      <CardDescription>Lekki, Lagos</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p>₦45,000,000</p>
-                      <div className="flex items-center mt-2 text-sm text-gray-500">
-                        <span className="mr-3">3 Beds</span>
-                        <span className="mr-3">2 Baths</span>
-                        <span>1500 sqft</span>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleButtonClick(`View Details of Property ${item}`);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="hidden md:flex">
-              <CarouselPrevious />
-              <CarouselNext />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <p>Loading properties...</p>
             </div>
-          </Carousel>
+          ) : featuredProperties.length > 0 ? (
+            <Carousel className="w-full max-w-5xl mx-auto">
+              <CarouselContent>
+                {featuredProperties.map((property) => (
+                  <CarouselItem key={property.id} className="md:basis-1/2 lg:basis-1/3">
+                    <Card className="cursor-pointer" onClick={() => handleButtonClick(`View Property ${property.id}`)}>
+                      <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+                        <Home className="h-12 w-12" />
+                      </div>
+                      <CardHeader>
+                        <CardTitle>{property.title}</CardTitle>
+                        <CardDescription>{property.location}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p>{formatPrice(Number(property.price))}</p>
+                        <div className="flex items-center mt-2 text-sm text-gray-500">
+                          <span className="mr-3">{property.bedrooms || 0} Beds</span>
+                          <span className="mr-3">{property.bathrooms || 0} Baths</span>
+                          <span>{property.area || 0} sqft</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleButtonClick(`View Details of Property ${property.id}`);
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="hidden md:flex">
+                <CarouselPrevious />
+                <CarouselNext />
+              </div>
+            </Carousel>
+          ) : (
+            <div className="text-center">
+              <p>No properties available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 
