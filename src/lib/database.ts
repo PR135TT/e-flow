@@ -31,15 +31,16 @@ export interface Property {
   description: string;
   price: number;
   location: string;
-  bedrooms: number;
-  bathrooms: number;
-  area: number;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  area: number | null;
   type: 'house' | 'apartment' | 'commercial' | 'land';
   status: 'sale' | 'rent';
   images: string[];
-  ownerId: string;
+  ownerId?: string;
   agentId?: string;
   companyId?: string;
+  isApproved: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +52,7 @@ export interface PropertySubmission {
   status: 'pending' | 'approved' | 'rejected';
   tokensAwarded: number;
   createdAt: Date;
+  propertyReferenceId?: string;
 }
 
 // Supabase database operations
@@ -126,6 +128,105 @@ export const db = {
       tokens: user.tokens,
       createdAt: new Date(user.created_at)
     } as User));
+  },
+  
+  // Property operations
+  getProperties: async () => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('is_approved', true);
+      
+    if (error) {
+      console.error('Error fetching properties:', error);
+      return [];
+    }
+    
+    return data.map(property => ({
+      id: property.id,
+      title: property.title,
+      description: property.description,
+      price: Number(property.price),
+      location: property.location,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area ? Number(property.area) : null,
+      type: property.type,
+      status: property.status,
+      images: property.images || [],
+      ownerId: property.owner_id,
+      agentId: property.agent_id,
+      companyId: property.company_id,
+      isApproved: property.is_approved,
+      createdAt: new Date(property.created_at),
+      updatedAt: new Date(property.updated_at)
+    } as Property));
+  },
+  
+  getPropertyById: async (id: string) => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching property:', error);
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      price: Number(data.price),
+      location: data.location,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      area: data.area ? Number(data.area) : null,
+      type: data.type,
+      status: data.status,
+      images: data.images || [],
+      ownerId: data.owner_id,
+      agentId: data.agent_id,
+      companyId: data.company_id,
+      isApproved: data.is_approved,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    } as Property;
+  },
+  
+  getPropertiesByType: async (type: 'house' | 'apartment' | 'commercial' | 'land') => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('type', type)
+      .eq('is_approved', true);
+      
+    if (error) {
+      console.error('Error fetching properties by type:', error);
+      return [];
+    }
+    
+    return data.map(property => ({
+      id: property.id,
+      title: property.title,
+      description: property.description,
+      price: Number(property.price),
+      location: property.location,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area ? Number(property.area) : null,
+      type: property.type,
+      status: property.status,
+      images: property.images || [],
+      ownerId: property.owner_id,
+      agentId: property.agent_id,
+      companyId: property.company_id,
+      isApproved: property.is_approved,
+      createdAt: new Date(property.created_at),
+      updatedAt: new Date(property.updated_at)
+    } as Property));
   },
   
   // Directory data - used by the Directory page
@@ -217,6 +318,30 @@ export const db = {
   },
   
   submitPropertyInfo: async (userId: string, propertyData: Partial<Property>) => {
+    // First create the property
+    const { data: propertyData, error: propertyError } = await supabase
+      .from('properties')
+      .insert({
+        title: propertyData.title || 'Untitled Property',
+        description: propertyData.description || 'No description provided',
+        price: propertyData.price || 0,
+        location: propertyData.location || 'Unknown location',
+        bedrooms: propertyData.bedrooms || null,
+        bathrooms: propertyData.bathrooms || null,
+        area: propertyData.area || null,
+        type: propertyData.type || 'house',
+        status: propertyData.status || 'sale',
+        owner_id: userId,
+        is_approved: false
+      })
+      .select()
+      .single();
+      
+    if (propertyError) {
+      console.error('Error creating property:', propertyError);
+      return null;
+    }
+    
     // Calculate token reward based on how complete the property data is
     let completenessScore = 0;
     let possibleFields = 0;
@@ -232,17 +357,15 @@ export const db = {
     const completenessPercentage = possibleFields > 0 ? completenessScore / possibleFields : 0;
     const tokensAwarded = Math.floor(10 + (completenessPercentage * 40)); // 10-50 tokens
     
-    // Insert a mock property for now (in a real app, we'd create a properties table entry)
-    const propertyId = `property_${Date.now()}`;
-    
     // Create a property submission record
     const { data: submissionData, error: submissionError } = await supabase
       .from('property_submissions')
       .insert({
-        property_id: propertyId,
+        property_id: propertyData.id,
         user_id: userId,
-        status: 'approved', // Auto-approve for demo
-        tokens_awarded: tokensAwarded
+        status: 'pending', // Pending approval
+        tokens_awarded: tokensAwarded,
+        property_reference_id: propertyData.id
       })
       .select()
       .single();
@@ -252,16 +375,14 @@ export const db = {
       return null;
     }
     
-    // Update user's tokens
-    await db.incrementUserTokens(userId, tokensAwarded);
-    
     return {
       id: submissionData.id,
       propertyId: submissionData.property_id,
       userId: submissionData.user_id,
       status: submissionData.status,
       tokensAwarded: submissionData.tokens_awarded,
-      createdAt: new Date(submissionData.created_at)
+      createdAt: new Date(submissionData.created_at),
+      propertyReferenceId: submissionData.property_reference_id
     } as PropertySubmission;
   }
 };

@@ -1,22 +1,72 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MapPin, Home, Search } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { MapPin, Home, Search, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { db, Property } from "@/lib/database";
+import { formatCurrency } from "@/lib/utils";
 
 const Properties = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Fetch properties on component mount
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const propertiesData = await db.getProperties();
+        setProperties(propertiesData);
+        setFilteredProperties(propertiesData);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        toast.error("Failed to load properties. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log("Search query:", searchQuery);
+      // Filter properties by title, description, location, or price
+      const filtered = properties.filter(property => 
+        property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.price.toString().includes(searchQuery)
+      );
+      
+      setFilteredProperties(filtered);
+      
+      if (filtered.length === 0) {
+        toast.info("No properties found matching your search criteria");
+      } else {
+        toast.success(`Found ${filtered.length} properties matching "${searchQuery}"`);
+      }
+    } else {
+      // Reset to show all properties
+      setFilteredProperties(properties);
     }
   };
 
-  const handleViewDetails = (propertyId: number) => {
-    console.log(`Viewing details for Property ${propertyId}`);
+  const handleViewDetails = (propertyId: string) => {
+    // For now, just show a toast - in future we'll navigate to a detail page
+    toast.info(`Viewing details for property ${propertyId}`);
+    console.log(`Viewing details for property ${propertyId}`);
+  };
+
+  // Helper function for displaying property features
+  const displayFeature = (value: number | null, unit: string) => {
+    return value ? `${value} ${unit}` : "N/A";
   };
 
   return (
@@ -46,41 +96,72 @@ const Properties = () => {
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold mb-8">Available Properties</h1>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <Card key={item} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="h-48 bg-gray-200 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
-                    <Home className="h-12 w-12" />
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-lg">Loading properties...</span>
+            </div>
+          ) : filteredProperties.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-gray-600">No properties found. Please try a different search.</p>
+              {searchQuery && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilteredProperties(properties);
+                  }}
+                >
+                  Clear Search
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProperties.map((property) => (
+                <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="h-48 bg-gray-200 overflow-hidden">
+                    {property.images && property.images.length > 0 ? (
+                      <img 
+                        src={property.images[0]} 
+                        alt={property.title} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+                        <Home className="h-12 w-12" />
+                      </div>
+                    )}
                   </div>
-                </div>
-                <CardHeader>
-                  <CardTitle>Luxury Villa {item}</CardTitle>
-                  <CardDescription>Lekki, Lagos</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="font-semibold text-lg">₦45,000,000</p>
-                  <div className="flex items-center mt-2 text-sm text-gray-500">
-                    <span className="mr-3">3 Beds</span>
-                    <span className="mr-3">2 Baths</span>
-                    <span>1500 sqft</span>
-                  </div>
-                  <div className="mt-4 flex items-center text-sm">
-                    <MapPin className="h-4 w-4 text-red-500 mr-1" />
-                    <span>Lekki Phase 1, Lagos</span>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full"
-                    onClick={() => handleViewDetails(item)}
-                  >
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  <CardHeader>
+                    <CardTitle>{property.title}</CardTitle>
+                    <CardDescription>{property.location}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="font-semibold text-lg">{formatCurrency(property.price)}</p>
+                    <div className="flex items-center mt-2 text-sm text-gray-500">
+                      <span className="mr-3">{displayFeature(property.bedrooms, "Beds")}</span>
+                      <span className="mr-3">{displayFeature(property.bathrooms, "Baths")}</span>
+                      <span>{displayFeature(property.area, "sqft")}</span>
+                    </div>
+                    <div className="mt-4 flex items-center text-sm">
+                      <MapPin className="h-4 w-4 text-red-500 mr-1" />
+                      <span>{property.location}</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full"
+                      onClick={() => handleViewDetails(property.id)}
+                    >
+                      View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

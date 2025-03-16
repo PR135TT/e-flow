@@ -9,7 +9,162 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      properties: {
+        Row: {
+          agent_id: string | null
+          area: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          company_id: string | null
+          created_at: string
+          description: string
+          id: string
+          images: string[] | null
+          is_approved: boolean | null
+          location: string
+          owner_id: string | null
+          price: number
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          company_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          images?: string[] | null
+          is_approved?: boolean | null
+          location: string
+          owner_id?: string | null
+          price: number
+          status: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          company_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[] | null
+          is_approved?: boolean | null
+          location?: string
+          owner_id?: string | null
+          price?: number
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_submissions: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          property_reference_id: string | null
+          status: string
+          tokens_awarded: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          property_reference_id?: string | null
+          status?: string
+          tokens_awarded?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          property_reference_id?: string | null
+          status?: string
+          tokens_awarded?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_submissions_property_reference_id_fkey"
+            columns: ["property_reference_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          location: string
+          name: string
+          phone: string
+          tokens: number
+          user_type: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          id: string
+          location: string
+          name: string
+          phone: string
+          tokens?: number
+          user_type: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          location?: string
+          name?: string
+          phone?: string
+          tokens?: number
+          user_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
