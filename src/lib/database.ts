@@ -1,3 +1,4 @@
+
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 
@@ -94,6 +95,7 @@ export const getPropertiesByQuery = async ({ limit = 10, location = '', type = '
     return [];
   }
   
+  // Return the properties with the same property names as expected in the database.types.ts
   return data.map(property => ({
     id: property.id,
     title: property.title,
@@ -102,16 +104,16 @@ export const getPropertiesByQuery = async ({ limit = 10, location = '', type = '
     location: property.location,
     bedrooms: property.bedrooms,
     bathrooms: property.bathrooms,
-    area: property.area ? Number(property.area) : null,
+    area: property.area,
     type: property.type,
     status: property.status,
     images: property.images || [],
-    ownerId: property.owner_id,
-    agentId: property.agent_id,
-    companyId: property.company_id,
-    isApproved: property.is_approved,
-    createdAt: new Date(property.created_at),
-    updatedAt: new Date(property.updated_at)
+    owner_id: property.owner_id,
+    agent_id: property.agent_id,
+    company_id: property.company_id,
+    is_approved: property.is_approved,
+    created_at: property.created_at,
+    updated_at: property.updated_at
   }));
 };
 
