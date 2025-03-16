@@ -102,10 +102,23 @@ const SignUp = () => {
         throw authError;
       }
       
+      console.log("Auth successful:", authData);
+      
       if (authData.user) {
-        console.log("Auth successful, user created:", authData.user);
+        // After successful authentication, we need to sign in to get the session
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
         
-        // Create a user profile in the users table
+        if (signInError) {
+          console.error("Sign in error:", signInError);
+          throw signInError;
+        }
+        
+        console.log("Sign in successful:", signInData);
+        
+        // Now create a user profile with the authenticated session
         const { error: profileError } = await supabase
           .from('users')
           .insert({
@@ -125,6 +138,10 @@ const SignUp = () => {
         }
         
         toast.success("Account created successfully! You can now log in.");
+        
+        // Sign out after profile creation to allow them to log in properly
+        await supabase.auth.signOut();
+        
         navigate("/");
       }
     } catch (error: any) {
