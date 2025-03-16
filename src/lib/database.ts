@@ -317,20 +317,20 @@ export const db = {
     return data.tokens;
   },
   
-  submitPropertyInfo: async (userId: string, propertyData: Partial<Property>) => {
+  submitPropertyInfo: async (userId: string, propertyInfo: Partial<Property>) => {
     // First create the property
-    const { data: propertyData, error: propertyError } = await supabase
+    const { data: newProperty, error: propertyError } = await supabase
       .from('properties')
       .insert({
-        title: propertyData.title || 'Untitled Property',
-        description: propertyData.description || 'No description provided',
-        price: propertyData.price || 0,
-        location: propertyData.location || 'Unknown location',
-        bedrooms: propertyData.bedrooms || null,
-        bathrooms: propertyData.bathrooms || null,
-        area: propertyData.area || null,
-        type: propertyData.type || 'house',
-        status: propertyData.status || 'sale',
+        title: propertyInfo.title || 'Untitled Property',
+        description: propertyInfo.description || 'No description provided',
+        price: propertyInfo.price || 0,
+        location: propertyInfo.location || 'Unknown location',
+        bedrooms: propertyInfo.bedrooms || null,
+        bathrooms: propertyInfo.bathrooms || null,
+        area: propertyInfo.area || null,
+        type: propertyInfo.type || 'house',
+        status: propertyInfo.status || 'sale',
         owner_id: userId,
         is_approved: false
       })
@@ -346,9 +346,9 @@ export const db = {
     let completenessScore = 0;
     let possibleFields = 0;
     
-    for (const key in propertyData) {
+    for (const key in propertyInfo) {
       possibleFields++;
-      if (propertyData[key as keyof Partial<Property>] !== undefined) {
+      if (propertyInfo[key as keyof Partial<Property>] !== undefined) {
         completenessScore++;
       }
     }
@@ -361,11 +361,11 @@ export const db = {
     const { data: submissionData, error: submissionError } = await supabase
       .from('property_submissions')
       .insert({
-        property_id: propertyData.id,
+        property_id: newProperty.id,
         user_id: userId,
         status: 'pending', // Pending approval
         tokens_awarded: tokensAwarded,
-        property_reference_id: propertyData.id
+        property_reference_id: newProperty.id
       })
       .select()
       .single();
