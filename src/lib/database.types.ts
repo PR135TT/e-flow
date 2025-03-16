@@ -71,6 +71,65 @@ export interface Database {
           created_at?: string
         }
       }
+      properties: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          price: number
+          location: string
+          bedrooms: number | null
+          bathrooms: number | null
+          area: number | null
+          type: 'house' | 'apartment' | 'commercial' | 'land'
+          status: 'sale' | 'rent'
+          images: string[]
+          owner_id?: string
+          agent_id?: string
+          company_id?: string
+          is_approved: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          price: number
+          location: string
+          bedrooms?: number | null
+          bathrooms?: number | null
+          area?: number | null
+          type: 'house' | 'apartment' | 'commercial' | 'land'
+          status: 'sale' | 'rent'
+          images?: string[]
+          owner_id?: string
+          agent_id?: string
+          company_id?: string
+          is_approved?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          price?: number
+          location?: string
+          bedrooms?: number | null
+          bathrooms?: number | null
+          area?: number | null
+          type?: 'house' | 'apartment' | 'commercial' | 'land'
+          status?: 'sale' | 'rent'
+          images?: string[]
+          owner_id?: string
+          agent_id?: string
+          company_id?: string
+          is_approved?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -83,3 +142,6 @@ export interface Database {
     }
   }
 }
+
+// Export the PropertyType type that's needed by Index.tsx
+export type PropertyType = Database['public']['Tables']['properties']['Row'];

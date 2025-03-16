@@ -55,6 +55,66 @@ export interface PropertySubmission {
   propertyReferenceId?: string;
 }
 
+// Add the missing getPropertiesByQuery function
+export const getPropertiesByQuery = async ({ limit = 10, location = '', type = '', status = '', minPrice = 0, maxPrice = 0 } = {}) => {
+  let query = supabase
+    .from('properties')
+    .select('*')
+    .eq('is_approved', true)
+    .order('created_at', { ascending: false });
+    
+  if (limit) {
+    query = query.limit(limit);
+  }
+  
+  if (location) {
+    query = query.ilike('location', `%${location}%`);
+  }
+  
+  if (type) {
+    query = query.eq('type', type);
+  }
+  
+  if (status) {
+    query = query.eq('status', status);
+  }
+  
+  if (minPrice > 0) {
+    query = query.gte('price', minPrice);
+  }
+  
+  if (maxPrice > 0) {
+    query = query.lte('price', maxPrice);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching properties by query:', error);
+    return [];
+  }
+  
+  return data.map(property => ({
+    id: property.id,
+    title: property.title,
+    description: property.description,
+    price: Number(property.price),
+    location: property.location,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    area: property.area ? Number(property.area) : null,
+    type: property.type,
+    status: property.status,
+    images: property.images || [],
+    ownerId: property.owner_id,
+    agentId: property.agent_id,
+    companyId: property.company_id,
+    isApproved: property.is_approved,
+    createdAt: new Date(property.created_at),
+    updatedAt: new Date(property.updated_at)
+  }));
+};
+
 // Supabase database operations
 export const db = {
   // User operations
