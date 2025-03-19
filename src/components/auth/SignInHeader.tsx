@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import { AuthStatus } from "./AuthStatus";
 
 export const SignInHeader = () => {
   return (
