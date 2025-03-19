@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { db } from "@/lib/database";
+import { Header } from "@/components/Header";
 
 // Page that shows real estate agents, companies, buyers and sellers
 const Directory = () => {
@@ -163,24 +164,24 @@ const Directory = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-blue-900 text-white py-6">
+      <Header />
+
+      {/* Search Bar */}
+      <section className="bg-blue-900 text-white py-6">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <Link to="/" className="text-2xl font-bold">E Flow</Link>
-            <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
-              <Input 
-                className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
-                placeholder="Search for agents, companies, buyers, or sellers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Search className="mr-2 h-4 w-4" /> Search
-              </Button>
-            </form>
-          </div>
+          <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
+            <Input 
+              className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
+              placeholder="Search for agents, companies, buyers, or sellers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
+              <Search className="mr-2 h-4 w-4" /> Search
+            </Button>
+          </form>
         </div>
-      </header>
+      </section>
 
       {/* Main Content */}
       <section className="py-12 bg-gray-50 flex-grow">

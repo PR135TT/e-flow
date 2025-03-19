@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Header } from "@/components/Header";
 
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,18 +29,18 @@ const Blog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-blue-900 text-white py-6">
+      <Header />
+
+      {/* Navigation */}
+      <section className="bg-blue-900 text-white py-3">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-2xl font-bold">E Flow</Link>
-            <nav>
-              <Link to="/properties" className="text-white hover:text-yellow-400 ml-4">Properties</Link>
-              <Link to="/analytics" className="text-white hover:text-yellow-400 ml-4">Analytics</Link>
-              <Link to="/tokens" className="text-white hover:text-yellow-400 ml-4">Tokens</Link>
-            </nav>
-          </div>
+          <nav>
+            <Link to="/properties" className="text-white hover:text-yellow-400 mr-4">Properties</Link>
+            <Link to="/analytics" className="text-white hover:text-yellow-400 mr-4">Analytics</Link>
+            <Link to="/tokens" className="text-white hover:text-yellow-400">Tokens</Link>
+          </nav>
         </div>
-      </header>
+      </section>
 
       {/* Blog Header */}
       <section className="py-12 bg-gray-50">

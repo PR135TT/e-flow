@@ -1,7 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Award, Star, Users, ArrowRight, Shield, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Header } from "@/components/Header";
 
 const Tokens = () => {
   const handleButtonClick = (action: string) => {
@@ -11,18 +13,18 @@ const Tokens = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-blue-900 text-white py-6">
+      <Header />
+
+      {/* Navigation */}
+      <section className="bg-blue-900 text-white py-3">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-2xl font-bold">E Flow</Link>
-            <nav>
-              <Link to="/properties" className="text-white hover:text-yellow-400 ml-4">Properties</Link>
-              <Link to="/analytics" className="text-white hover:text-yellow-400 ml-4">Analytics</Link>
-              <Link to="/blog" className="text-white hover:text-yellow-400 ml-4">Blog</Link>
-            </nav>
-          </div>
+          <nav>
+            <Link to="/properties" className="text-white hover:text-yellow-400 mr-4">Properties</Link>
+            <Link to="/analytics" className="text-white hover:text-yellow-400 mr-4">Analytics</Link>
+            <Link to="/blog" className="text-white hover:text-yellow-400">Blog</Link>
+          </nav>
         </div>
-      </header>
+      </section>
 
       {/* Hero Section */}
       <section className="relative h-[60vh] bg-gradient-to-r from-yellow-400 to-yellow-600 text-black">

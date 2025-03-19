@@ -3,23 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, ArrowUp, ArrowDown, Home, LineChart, BarChart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Header } from "@/components/Header";
 
 const Analytics = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-blue-900 text-white py-6">
+      <Header />
+
+      {/* Navigation */}
+      <section className="bg-blue-900 text-white py-3">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-2xl font-bold">E Flow</Link>
-            <nav>
-              <Link to="/properties" className="text-white hover:text-yellow-400 ml-4">Properties</Link>
-              <Link to="/tokens" className="text-white hover:text-yellow-400 ml-4">Tokens</Link>
-              <Link to="/blog" className="text-white hover:text-yellow-400 ml-4">Blog</Link>
-            </nav>
-          </div>
+          <nav>
+            <Link to="/properties" className="text-white hover:text-yellow-400 mr-4">Properties</Link>
+            <Link to="/tokens" className="text-white hover:text-yellow-400 mr-4">Tokens</Link>
+            <Link to="/blog" className="text-white hover:text-yellow-400">Blog</Link>
+          </nav>
         </div>
-      </header>
+      </section>
 
       {/* Analytics Content */}
       <section className="py-12 bg-gray-50 flex-grow">

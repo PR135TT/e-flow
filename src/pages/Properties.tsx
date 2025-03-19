@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { db, Property } from "@/lib/database";
 import { formatCurrency } from "@/lib/utils";
+import { Header } from "@/components/Header";
 
 const Properties = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,7 +16,6 @@ const Properties = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Fetch properties on component mount
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -37,7 +36,6 @@ const Properties = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Filter properties by title, description, location, or price
       const filtered = properties.filter(property => 
         property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,18 +51,15 @@ const Properties = () => {
         toast.success(`Found ${filtered.length} properties matching "${searchQuery}"`);
       }
     } else {
-      // Reset to show all properties
       setFilteredProperties(properties);
     }
   };
 
   const handleViewDetails = (propertyId: string) => {
-    // For now, just show a toast - in future we'll navigate to a detail page
     toast.info(`Viewing details for property ${propertyId}`);
     console.log(`Viewing details for property ${propertyId}`);
   };
 
-  // Helper function for displaying property features
   const displayFeature = (value: number | null, unit: string) => {
     return value ? `${value} ${unit}` : "N/A";
   };
@@ -72,24 +67,24 @@ const Properties = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-blue-900 text-white py-6">
+      <Header />
+
+      {/* Property Search */}
+      <section className="bg-blue-900 text-white py-6">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <Link to="/" className="text-2xl font-bold">E Flow</Link>
-            <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
-              <Input 
-                className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
-                placeholder="Search by location, property type, or price..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Search className="mr-2 h-4 w-4" /> Search
-              </Button>
-            </form>
-          </div>
+          <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
+            <Input 
+              className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
+              placeholder="Search by location, property type, or price..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
+              <Search className="mr-2 h-4 w-4" /> Search
+            </Button>
+          </form>
         </div>
-      </header>
+      </section>
 
       {/* Property Listings */}
       <section className="py-12 bg-gray-50 flex-grow">
