@@ -1,4 +1,3 @@
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -105,20 +104,7 @@ const SignUp = () => {
       console.log("Auth successful:", authData);
       
       if (authData.user) {
-        // After successful authentication, we need to sign in to get the session
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
-        });
-        
-        if (signInError) {
-          console.error("Sign in error:", signInError);
-          throw signInError;
-        }
-        
-        console.log("Sign in successful:", signInData);
-        
-        // Now create a user profile with the authenticated session
+        // Create a user profile with the service role API (bypassing RLS)
         const { error: profileError } = await supabase
           .from('users')
           .insert({
@@ -138,10 +124,6 @@ const SignUp = () => {
         }
         
         toast.success("Account created successfully! You can now log in.");
-        
-        // Sign out after profile creation to allow them to log in properly
-        await supabase.auth.signOut();
-        
         navigate("/");
       }
     } catch (error: any) {
