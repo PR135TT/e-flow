@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,9 +12,9 @@ import Tokens from "./pages/Tokens";
 import Blog from "./pages/Blog";
 import Directory from "./pages/Directory";
 import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
 
-// Create an auth context
 export const AuthContext = createContext<{
   user: any | null;
   session: any | null;
@@ -24,7 +23,6 @@ export const AuthContext = createContext<{
   session: null,
 });
 
-// Create the query client here instead of inside the component
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -32,13 +30,11 @@ const App = () => {
   const [session, setSession] = useState<any | null>(null);
 
   useEffect(() => {
-    // Get the current session and user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -64,7 +60,7 @@ const App = () => {
               <Route path="/blog" element={<Blog />} />
               <Route path="/directory" element={<Directory />} />
               <Route path="/signup" element={<SignUp />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/signin" element={<SignIn />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
