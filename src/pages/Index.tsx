@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MapPin, Home, TrendingUp, MessageCircle, Coins, Search } from "lucide-react";
+import { MapPin, Home, TrendingUp, MessageCircle, Coins, Search, PlusCircle } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -48,7 +47,6 @@ const Index = () => {
   const handleButtonClick = (action: string) => {
     console.log(`${action} clicked`);
     
-    // Navigate based on the action
     if (action === "Comprehensive Listings") {
       navigate('/properties');
     } else if (action === "Market Analytics") {
@@ -69,6 +67,8 @@ const Index = () => {
       navigate('/signup');
     } else if (action === "Learn More") {
       toast.info("Learn more functionality coming soon");
+    } else if (action === "Upload Property") {
+      navigate('/submit-property');
     }
   };
 
@@ -90,14 +90,12 @@ const Index = () => {
     }
   };
 
-  // Format price with naira symbol and commas
   const formatPrice = (price: number) => {
     return `₦${price.toLocaleString()}`;
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Hero Section */}
       <section className="relative h-[80vh] bg-gradient-to-r from-blue-900 to-purple-900 text-white">
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 pt-6 container mx-auto px-4">
@@ -114,22 +112,29 @@ const Index = () => {
             <p className="text-xl md:text-2xl mb-8 max-w-2xl">
               Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
             </p>
-            <form onSubmit={handleSearch} className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
-              <Input 
-                className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
-                placeholder="Search by location, property type, or price..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Search className="mr-2 h-4 w-4" /> Search Properties
+            <div className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
+              <form onSubmit={handleSearch} className="flex-grow flex flex-col md:flex-row gap-3">
+                <Input 
+                  className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
+                  placeholder="Search by location, property type, or price..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
+                  <Search className="mr-2 h-4 w-4" /> Search Properties
+                </Button>
+              </form>
+              <Button 
+                onClick={() => handleButtonClick("Upload Property")}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
               </Button>
-            </form>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Cards */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Platform</h2>
@@ -169,7 +174,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Token Incentive Section */}
       <section className="py-16 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-8 md:mb-0">
@@ -196,10 +200,17 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Properties */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Featured Properties</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Featured Properties</h2>
+            <Button 
+              onClick={() => handleButtonClick("Upload Property")}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
+            </Button>
+          </div>
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <p>Loading properties...</p>
@@ -254,7 +265,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Market Analytics Preview */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Market Analytics</h2>
@@ -272,7 +282,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Call to Action */}
       <section className="py-16 bg-blue-900 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Find Your Perfect Property?</h2>
@@ -297,7 +306,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
