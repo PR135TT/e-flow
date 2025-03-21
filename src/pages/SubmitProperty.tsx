@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,17 +5,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
-import { MapPin, Home, Upload, Image, Check, ChevronDown, DollarSign, SquareArrowDownRight } from "lucide-react";
+import { MapPin, Home, Upload, Image, Check, ChevronDown, DollarSign, X, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useState, useContext } from "react";
+import { useState, useContext, useRef } from "react";
 import { db } from "@/lib/database";
 import { AuthContext } from "@/App";
+import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Define the form validation schema
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
@@ -34,6 +34,17 @@ const SubmitProperty = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useState(() => {
+    if (!user) {
+      toast.error("Please sign in to submit a property");
+      navigate("/signin", { state: { returnUrl: "/submit-property" } });
+    }
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,6 +61,115 @@ const SubmitProperty = () => {
     }
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      
+      const invalidFiles = newFiles.filter(file => !file.type.startsWith('image/'));
+      if (invalidFiles.length > 0) {
+        toast.error("Only image files are allowed");
+        return;
+      }
+      
+      const largeFiles = newFiles.filter(file => file.size > 5 * 1024 * 1024);
+      if (largeFiles.length > 0) {
+        toast.error("Images must be smaller than 5MB");
+        return;
+      }
+      
+      setImageFiles(prevFiles => [...prevFiles, ...newFiles]);
+      setUploadError(null);
+      
+      const objectURLs = newFiles.map(file => URL.createObjectURL(file));
+      setImageUrls(prevUrls => [...prevUrls, ...objectURLs]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImageUrls(prevUrls => {
+      const newUrls = [...prevUrls];
+      
+      if (index < imageFiles.length) {
+        URL.revokeObjectURL(newUrls[index]);
+      }
+      
+      newUrls.splice(index, 1);
+      return newUrls;
+    });
+    
+    setImageFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  };
+
+  const uploadImages = async () => {
+    if (imageFiles.length === 0) return [];
+    if (!user) {
+      toast.error("You must be signed in to upload images");
+      return [];
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    const uploadedUrls: string[] = [];
+
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'properties-images');
+      
+      if (!bucketExists) {
+        await supabase.storage.createBucket('properties-images', {
+          public: true,
+          fileSizeLimit: 5 * 1024 * 1024
+        });
+      }
+
+      for (const file of imageFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('properties-images')
+          .upload(filePath, file);
+
+        if (error) {
+          console.error("Error uploading image:", error);
+          throw new Error(error.message);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('properties-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrlData.publicUrl);
+      }
+
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      setUploadError("Failed to upload images. Please try again.");
+      return [];
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleAddImageUrl = () => {
+    const url = prompt("Enter image URL:");
+    if (url && url.trim() !== "") {
+      try {
+        new URL(url.trim());
+        setImageUrls([...imageUrls, url.trim()]);
+        toast.success("Image added successfully");
+      } catch (e) {
+        toast.error("Please enter a valid URL");
+      }
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
       toast.error("You must be signed in to submit a property");
@@ -60,7 +180,13 @@ const SubmitProperty = () => {
     setIsSubmitting(true);
 
     try {
-      // Convert string values to appropriate types
+      const uploadedImageUrls = await uploadImages();
+      
+      const allImageUrls = [
+        ...uploadedImageUrls,
+        ...imageUrls.filter(url => url.startsWith('http'))
+      ];
+
       const propertyData = {
         title: values.title,
         description: values.description,
@@ -71,18 +197,17 @@ const SubmitProperty = () => {
         area: values.area ? Number(values.area) : null,
         type: values.type,
         status: values.status,
-        images: imageUrls
+        images: allImageUrls
       };
 
-      // Submit the property data
       const result = await db.submitPropertyInfo(user.id, propertyData);
 
       if (result) {
         toast.success(`Property submitted successfully! You earned ${result.tokensAwarded} tokens.`);
         form.reset();
         setImageUrls([]);
+        setImageFiles([]);
         
-        // Navigate back to properties page after a short delay
         setTimeout(() => {
           navigate("/properties");
         }, 2000);
@@ -95,21 +220,6 @@ const SubmitProperty = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Handle image URL input
-  const handleAddImageUrl = () => {
-    const url = prompt("Enter image URL:");
-    if (url && url.trim() !== "") {
-      setImageUrls([...imageUrls, url.trim()]);
-      toast.success("Image added successfully");
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
-    const newImages = [...imageUrls];
-    newImages.splice(index, 1);
-    setImageUrls(newImages);
   };
 
   return (
@@ -130,6 +240,16 @@ const SubmitProperty = () => {
             </CardHeader>
 
             <CardContent className="pt-6">
+              {!user && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Authentication Required</AlertTitle>
+                  <AlertDescription>
+                    You must be signed in to submit a property. Please <Link to="/signin" className="font-medium underline">sign in</Link> or <Link to="/signup" className="font-medium underline">create an account</Link>.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -286,6 +406,15 @@ const SubmitProperty = () => {
 
                   <div className="space-y-3">
                     <Label>Property Images</Label>
+                    
+                    {uploadError && (
+                      <Alert variant="destructive" className="mb-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{uploadError}</AlertDescription>
+                      </Alert>
+                    )}
+                    
                     <div className="flex flex-wrap gap-2 mb-2">
                       {imageUrls.map((url, index) => (
                         <div key={index} className="relative group">
@@ -294,7 +423,8 @@ const SubmitProperty = () => {
                             alt={`Property image ${index + 1}`} 
                             className="h-24 w-24 object-cover rounded-md border border-gray-200"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder.svg'; 
+                              const target = e.target as HTMLImageElement;
+                              target.src = "/placeholder.svg"; 
                             }}
                           />
                           <Button
@@ -302,23 +432,54 @@ const SubmitProperty = () => {
                             variant="destructive"
                             size="sm"
                             className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleRemoveImage(index)}
+                            onClick={() => removeImage(index)}
                           >
-                            ✕
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
                       ))}
+                      
+                      {imageUrls.length === 0 && (
+                        <div className="h-24 w-24 rounded-md border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                          <p className="text-xs text-center px-2">No images</p>
+                        </div>
+                      )}
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full border-dashed"
-                      onClick={handleAddImageUrl}
-                    >
-                      <Image className="mr-2 h-4 w-4" /> Add Image URL
-                    </Button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-dashed flex-grow"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        <Upload className="mr-2 h-4 w-4" /> 
+                        Upload Images
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-dashed flex-grow"
+                        onClick={handleAddImageUrl}
+                      >
+                        <Image className="mr-2 h-4 w-4" /> 
+                        Add Image URL
+                      </Button>
+                    </div>
+                    
                     <FormDescription>
-                      Add URLs for property images. Adding high-quality images increases your token reward.
+                      Upload images or add URLs. Adding high-quality images increases your token reward. Max 5MB per image.
                     </FormDescription>
                   </div>
 
@@ -346,10 +507,13 @@ const SubmitProperty = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isUploading || !user}
                   >
-                    {isSubmitting ? (
-                      <>Submitting...</>
+                    {isSubmitting || isUploading ? (
+                      <span className="flex items-center">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                        {isUploading ? "Uploading Images..." : "Submitting..."}
+                      </span>
                     ) : (
                       <>Submit Property & Earn Tokens</>
                     )}

@@ -8,6 +8,7 @@ import { useState, useEffect, createContext } from "react";
 import { supabase } from "./lib/supabase";
 import Index from "./pages/Index";
 import Properties from "./pages/Properties";
+import PropertyDetails from "./pages/PropertyDetails";
 import Analytics from "./pages/Analytics";
 import Tokens from "./pages/Tokens";
 import Blog from "./pages/Blog";
@@ -57,6 +58,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/properties" element={<Properties />} />
+              <Route path="/property/:id" element={<PropertyDetails />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/tokens" element={<Tokens />} />
               <Route path="/blog" element={<Blog />} />

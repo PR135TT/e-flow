@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -57,8 +56,7 @@ const Properties = () => {
   };
 
   const handleViewDetails = (propertyId: string) => {
-    toast.info(`Viewing details for property ${propertyId}`);
-    console.log(`Viewing details for property ${propertyId}`);
+    navigate(`/property/${propertyId}`);
   };
 
   const displayFeature = (value: number | null, unit: string) => {
@@ -67,7 +65,6 @@ const Properties = () => {
 
   const handleUploadProperty = () => {
     navigate('/submit-property');
-    // Removed the toast.info notification here
   };
 
   return (
