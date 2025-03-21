@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ import Directory from "./pages/Directory";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
+import SubmitProperty from "./pages/SubmitProperty";
 
 export const AuthContext = createContext<{
   user: any | null;
@@ -61,6 +63,7 @@ const App = () => {
               <Route path="/directory" element={<Directory />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
+              <Route path="/submit-property" element={<SubmitProperty />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
