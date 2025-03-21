@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MapPin, Home, Search, Loader2 } from "lucide-react";
+import { MapPin, Home, Search, Loader2, PlusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -64,32 +64,57 @@ const Properties = () => {
     return value ? `${value} ${unit}` : "N/A";
   };
 
+  const handleUploadProperty = () => {
+    navigate('/submit-property');
+    toast.info("Navigating to property submission form");
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <Header />
 
-      {/* Property Search */}
       <section className="bg-blue-900 text-white py-6">
         <div className="container mx-auto px-4">
-          <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
-            <Input 
-              className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
-              placeholder="Search by location, property type, or price..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
-              <Search className="mr-2 h-4 w-4" /> Search
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
+              <Input 
+                className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
+                placeholder="Search by location, property type, or price..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
+                <Search className="mr-2 h-4 w-4" /> Search
+              </Button>
+            </form>
+            
+            <Button 
+              onClick={handleUploadProperty}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
             </Button>
-          </form>
+          </div>
+          
+          <div className="text-sm text-white/80 mt-2">
+            Upload property data and earn tokens! Contribute to our database and be rewarded.
+          </div>
         </div>
       </section>
 
-      {/* Property Listings */}
       <section className="py-12 bg-gray-50 flex-grow">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-8">Available Properties</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Available Properties</h1>
+            
+            <Button 
+              variant="outline"
+              onClick={handleUploadProperty}
+              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Submit Your Property
+            </Button>
+          </div>
           
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
@@ -160,7 +185,6 @@ const Properties = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="container mx-auto px-4 text-center">
           <p>&copy; {new Date().getFullYear()} E Flow. All rights reserved.</p>
