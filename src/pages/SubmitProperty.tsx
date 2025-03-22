@@ -1,534 +1,307 @@
 
-import { Header } from "@/components/Header";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { MapPin, Home, Upload, Image, Check, ChevronDown, DollarSign, X, AlertCircle, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { toast } from "sonner";
-import { useNavigate, Link } from "react-router-dom";
-import { useState, useContext, useRef, useEffect } from "react";
-import { db } from "@/lib/database";
-import { AuthContext } from "@/App";
-import { supabase } from "@/lib/supabase";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { db } from '@/lib/database';
+import { supabase } from '@/lib/supabase';
+import { useEffect as useEffectWithLayout, useMobile } from '@/hooks/use-mobile';
 
+// Define form schema
 const formSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-  price: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0, "Price must be a positive number"),
-  location: z.string().min(3, "Location must be at least 3 characters"),
-  bedrooms: z.string().refine(val => val === "" || (!isNaN(Number(val)) && Number(val) >= 0), "Bedrooms must be a non-negative number"),
-  bathrooms: z.string().refine(val => val === "" || (!isNaN(Number(val)) && Number(val) >= 0), "Bathrooms must be a non-negative number"),
-  area: z.string().refine(val => val === "" || (!isNaN(Number(val)) && Number(val) > 0), "Area must be a positive number"),
-  type: z.enum(["house", "apartment", "commercial", "land"]),
-  status: z.enum(["sale", "rent"])
+  title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
+  description: z.string().min(20, { message: 'Description must be at least 20 characters' }),
+  price: z.coerce.number().positive({ message: 'Price must be a positive number' }),
+  location: z.string().min(3, { message: 'Location is required' }),
+  bedrooms: z.coerce.number().int().positive().optional(),
+  bathrooms: z.coerce.number().positive().optional(),
+  area: z.coerce.number().positive().optional(),
+  type: z.enum(['house', 'apartment', 'commercial', 'land']),
+  status: z.enum(['sale', 'rent']),
+  images: z.any().optional(),
 });
 
-const SubmitProperty = () => {
-  const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [bucketExists, setBucketExists] = useState(true); // Default to true since we've created the bucket
-  const [isUserProfileChecked, setIsUserProfileChecked] = useState(false);
-  const [userProfileError, setUserProfileError] = useState<string | null>(null);
+type FormData = z.infer<typeof formSchema>;
 
+const SubmitProperty = () => {
+  const [loading, setLoading] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [bucketExists, setBucketExists] = useState(true); // Default to true
+  const navigate = useNavigate();
+  const isMobile = useMobile();
+
+  // Create form
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      price: 0,
+      location: '',
+      bedrooms: undefined,
+      bathrooms: undefined,
+      area: undefined,
+      type: 'house',
+      status: 'sale',
+    },
+  });
+
+  // Check if the storage bucket exists
   useEffect(() => {
     const checkBucket = async () => {
       try {
-        const { data: buckets, error } = await supabase.storage.listBuckets();
+        const { data, error } = await supabase.storage.getBucket('properties-images');
         if (error) {
-          console.error("Error listing buckets:", error);
+          console.error('Bucket check error:', error);
           setBucketExists(false);
-          return;
+        } else {
+          setBucketExists(true);
         }
-        const exists = buckets?.some(bucket => bucket.name === 'properties-images');
-        setBucketExists(exists || false);
-        console.log("Storage bucket exists:", exists);
-      } catch (error) {
-        console.error("Error checking bucket:", error);
+      } catch (err) {
+        console.error('Failed to check bucket:', err);
         setBucketExists(false);
       }
     };
-    
+
     checkBucket();
   }, []);
 
-  // Check if user profile exists in the users table
-  useEffect(() => {
-    const checkUserProfile = async () => {
-      if (!user) return;
+  // Handle image file selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setImageFiles(prev => [...prev, ...newFiles]);
       
-      try {
-        // Check if the user exists in the users table
-        const { data, error } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-
-        if (error && error.code === 'PGRST116') {
-          console.log("User profile doesn't exist. Will create one when submitting property.");
-          setIsUserProfileChecked(true);
-          return;
-        }
-
-        if (error) {
-          console.error("Error checking user profile:", error);
-          setUserProfileError("Error checking your user profile. Please try again.");
-          return;
-        }
-
-        console.log("User profile exists:", data);
-        setIsUserProfileChecked(true);
-      } catch (error) {
-        console.error("Error in checkUserProfile:", error);
-        setUserProfileError("Error checking your user profile. Please try again.");
-      }
-    };
-
-    checkUserProfile();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) {
-      toast.error("Please sign in to submit a property");
-      navigate("/signin", { state: { returnUrl: "/submit-property" } });
+      // Create preview URLs for the images
+      const newUrls = newFiles.map(file => URL.createObjectURL(file));
+      setImageUrls(prev => [...prev, ...newUrls]);
     }
-  }, [user, navigate]);
+  };
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      price: "",
-      location: "",
-      bedrooms: "",
-      bathrooms: "",
-      area: "",
-      type: "house",
-      status: "sale"
-    }
-  });
+  // Remove image from preview
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => {
+      // Revoke the URL to prevent memory leaks
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
 
-  // Create a user profile if one doesn't exist
-  const ensureUserProfile = async () => {
-    if (!user) return false;
+  // Handle form submission
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setError(null);
     
     try {
-      // Check if the user exists in the users table
-      const { data, error } = await supabase
+      // Get current user's session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+      
+      const session = sessionData?.session;
+      
+      if (!session) {
+        throw new Error('You must be logged in to submit a property');
+      }
+      
+      const userId = session.user.id;
+      
+      // Check if user exists in the users table
+      const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id')
-        .eq('id', user.id)
+        .select('*')
+        .eq('id', userId)
         .single();
       
-      if (error && error.code === 'PGRST116') {
-        // User doesn't exist, create a profile
-        const { error: insertError } = await supabase
+      // If user doesn't exist in our users table, create a profile
+      if (userError || !userData) {
+        // Get user details from auth
+        const { data: userInfo } = await supabase.auth.getUser();
+        
+        if (!userInfo.user) {
+          throw new Error('Could not retrieve user information');
+        }
+        
+        // Create user profile with default values
+        const { error: createUserError } = await supabase
           .from('users')
           .insert({
-            id: user.id,
-            email: user.email || '',
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            phone: user.phone || '',
-            location: '',
+            id: userId,
+            name: userInfo.user.user_metadata?.full_name || 'New User',
+            email: userInfo.user.email || '',
+            phone: userInfo.user.user_metadata?.phone || 'No phone',
+            location: 'Unknown location',
             user_type: 'seller',
             tokens: 0
           });
         
-        if (insertError) {
-          console.error("Error creating user profile:", insertError);
-          toast.error("Failed to create your user profile. Please try again.");
-          return false;
+        if (createUserError) {
+          throw new Error(`Failed to create user profile: ${createUserError.message}`);
         }
-        
-        toast.success("User profile created successfully!");
-        return true;
       }
       
-      if (error) {
-        console.error("Error checking user profile:", error);
-        toast.error("Error checking your user profile. Please try again.");
-        return false;
-      }
+      // Upload images if the bucket exists
+      let imageUrls: string[] = [];
       
-      // User exists
-      return true;
-    } catch (error) {
-      console.error("Error in ensureUserProfile:", error);
-      toast.error("Error with your user profile. Please try again.");
-      return false;
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      
-      const invalidFiles = newFiles.filter(file => !file.type.startsWith('image/'));
-      if (invalidFiles.length > 0) {
-        toast.error("Only image files are allowed");
-        return;
-      }
-      
-      const largeFiles = newFiles.filter(file => file.size > 5 * 1024 * 1024);
-      if (largeFiles.length > 0) {
-        toast.error("Images must be smaller than 5MB");
-        return;
-      }
-      
-      setImageFiles(prevFiles => [...prevFiles, ...newFiles]);
-      setUploadError(null);
-      
-      const objectURLs = newFiles.map(file => URL.createObjectURL(file));
-      setImageUrls(prevUrls => [...prevUrls, ...objectURLs]);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImageUrls(prevUrls => {
-      const newUrls = [...prevUrls];
-      
-      if (index < imageFiles.length) {
-        URL.revokeObjectURL(newUrls[index]);
-      }
-      
-      newUrls.splice(index, 1);
-      return newUrls;
-    });
-    
-    setImageFiles(prevFiles => {
-      const newFiles = [...prevFiles];
-      newFiles.splice(index, 1);
-      return newFiles;
-    });
-  };
-
-  const uploadImages = async () => {
-    if (imageFiles.length === 0) return [];
-    if (!user) {
-      toast.error("You must be signed in to upload images");
-      return [];
-    }
-
-    setIsUploading(true);
-    setUploadError(null);
-    const uploadedUrls: string[] = [];
-
-    try {
-      if (!bucketExists) {
-        toast.warning("Storage setup incomplete. Images will be handled as URLs only.");
-        return imageUrls.filter(url => url.startsWith('http'));
-      }
-
-      for (const file of imageFiles) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-
-        const { data, error } = await supabase.storage
-          .from('properties-images')
-          .upload(filePath, file);
-
-        if (error) {
-          console.error("Error uploading image:", error);
-          throw new Error(error.message);
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from('properties-images')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrlData.publicUrl);
-      }
-
-      return uploadedUrls;
-    } catch (error) {
-      console.error("Error uploading images:", error);
-      setUploadError("Failed to upload images. Please try again.");
-      toast.error("Failed to upload images. Using URLs only.");
-      return imageUrls.filter(url => url.startsWith('http'));
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleAddImageUrl = () => {
-    const url = prompt("Enter image URL:");
-    if (url && url.trim() !== "") {
-      try {
-        new URL(url.trim());
-        setImageUrls([...imageUrls, url.trim()]);
-        toast.success("Image added successfully");
-      } catch (e) {
-        toast.error("Please enter a valid URL");
-      }
-    }
-  };
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) {
-      toast.error("You must be signed in to submit a property");
-      navigate("/signin");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // First ensure the user profile exists
-      const userProfileCreated = await ensureUserProfile();
-      if (!userProfileCreated) {
-        setIsSubmitting(false);
-        return;
-      }
-      
-      let allImageUrls: string[] = [];
-      
-      const validHttpUrls = imageUrls.filter(url => url.startsWith('http'));
-      
-      if (imageFiles.length > 0) {
-        const uploadedImageUrls = await uploadImages();
-        allImageUrls = [...validHttpUrls, ...(uploadedImageUrls || [])];
-      } else {
-        allImageUrls = validHttpUrls;
-      }
-
-      const propertyData = {
-        title: values.title,
-        description: values.description,
-        price: Number(values.price),
-        location: values.location,
-        bedrooms: values.bedrooms ? Number(values.bedrooms) : null,
-        bathrooms: values.bathrooms ? Number(values.bathrooms) : null,
-        area: values.area ? Number(values.area) : null,
-        type: values.type,
-        status: values.status,
-        images: allImageUrls,
-        owner_id: user.id
-      };
-
-      console.log("Submitting property data:", propertyData);
-      
-      const { data: newProperty, error: propertyError } = await supabase
-        .from('properties')
-        .insert({
-          title: propertyData.title,
-          description: propertyData.description,
-          price: propertyData.price,
-          location: propertyData.location,
-          bedrooms: propertyData.bedrooms,
-          bathrooms: propertyData.bathrooms,
-          area: propertyData.area,
-          type: propertyData.type,
-          status: propertyData.status,
-          images: propertyData.images,
-          owner_id: user.id,
-          is_approved: false
-        })
-        .select()
-        .single();
-
-      if (propertyError) {
-        console.error("Error submitting property:", propertyError);
-        toast.error(`Failed to submit property: ${propertyError.message}`);
-        return;
-      }
-
-      const tokensAwarded = calculateTokenReward(propertyData);
-
-      const { data: submissionData, error: submissionError } = await supabase
-        .from('property_submissions')
-        .insert({
-          property_id: newProperty.id,
-          user_id: user.id,
-          status: 'pending',
-          tokens_awarded: tokensAwarded,
-          property_reference_id: newProperty.id
-        })
-        .select()
-        .single();
-
-      if (submissionError) {
-        console.error("Error creating submission:", submissionError);
-        toast.error(`Submission created but reward tracking failed: ${submissionError.message}`);
-      } else {
-        // Update user's tokens (add the new tokens to their existing balance)
-        const { data: userData, error: userFetchError } = await supabase
-          .from('users')
-          .select('tokens')
-          .eq('id', user.id)
-          .single();
+      if (bucketExists && imageFiles.length > 0) {
+        for (const file of imageFiles) {
+          const filePath = `${userId}/${Date.now()}-${file.name}`;
           
-        if (userFetchError) {
-          console.error("Error fetching user tokens:", userFetchError);
-          toast.error("Property submitted but tokens couldn't be awarded");
-        } else {
-          const currentTokens = userData.tokens || 0;
-          const newTokenAmount = currentTokens + tokensAwarded;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('properties-images')
+            .upload(filePath, file);
+            
+          if (uploadError) {
+            console.error('Image upload error:', uploadError);
+            continue;
+          }
           
-          const { error: updateError } = await supabase
-            .from('users')
-            .update({ tokens: newTokenAmount })
-            .eq('id', user.id);
-
-          if (updateError) {
-            console.error("Error updating tokens:", updateError);
-            toast.error("Property submitted but tokens couldn't be awarded");
-          } else {
-            toast.success(`Property submitted successfully! You earned ${tokensAwarded} tokens.`);
+          // Get public URL for the uploaded image
+          const { data: urlData } = await supabase.storage
+            .from('properties-images')
+            .getPublicUrl(filePath);
+            
+          if (urlData && urlData.publicUrl) {
+            imageUrls.push(urlData.publicUrl);
           }
         }
       }
-
-      form.reset();
-      setImageUrls([]);
-      setImageFiles([]);
       
+      // Submit property info
+      const propertySubmission = await db.submitPropertyInfo(userId, {
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        location: data.location,
+        bedrooms: data.bedrooms || null,
+        bathrooms: data.bathrooms || null,
+        area: data.area || null,
+        type: data.type,
+        status: data.status,
+        images: imageUrls
+      });
+      
+      if (!propertySubmission) {
+        throw new Error('Failed to submit property');
+      }
+      
+      setSubmissionResult(propertySubmission);
+      
+      // Update user tokens
+      const tokensAwarded = propertySubmission.tokensAwarded;
+      const newTokens = await db.incrementUserTokens(userId, tokensAwarded);
+      
+      if (newTokens === null) {
+        console.error('Failed to update tokens');
+      }
+      
+      // Success notification
+      toast.success('Property submitted successfully', {
+        description: `You've earned ${tokensAwarded} tokens!`,
+        duration: 5000,
+      });
+      
+      // Redirect to the home page after a delay
       setTimeout(() => {
-        navigate("/properties");
-      }, 2000);
-
-    } catch (error) {
-      console.error("Error submitting property:", error);
-      toast.error("An error occurred while submitting the property. Please try again.");
+        navigate('/');
+      }, 3000);
+      
+    } catch (err: any) {
+      console.error('Submission error:', err);
+      setError(err.message || 'Failed to submit property');
+      toast.error('Submission failed', {
+        description: err.message || 'Please try again later',
+      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const calculateTokenReward = (propertyData: any) => {
-    let score = 0;
-    
-    if (propertyData.title) score += 2;
-    if (propertyData.price) score += 2;
-    if (propertyData.location) score += 2;
-    if (propertyData.type) score += 2;
-    if (propertyData.status) score += 2;
-    
-    if (propertyData.description && propertyData.description.length > 50) score += 5;
-    
-    if (propertyData.bedrooms !== null) score += 3;
-    if (propertyData.bathrooms !== null) score += 3;
-    if (propertyData.area !== null) score += 3;
-    
-    const imageCount = propertyData.images?.length || 0;
-    score += Math.min(imageCount * 4, 20);
-    
-    return Math.max(score, 10);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          <Card className="shadow-lg">
-            <CardHeader className="bg-blue-900 text-white">
-              <CardTitle className="text-2xl flex items-center">
-                <Upload className="mr-2 h-5 w-5" />
-                Submit Property
-              </CardTitle>
-              <CardDescription className="text-blue-100">
-                Fill in the details below to submit a property and earn tokens
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="pt-6">
-              {!user && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Authentication Required</AlertTitle>
-                  <AlertDescription>
-                    You must be signed in to submit a property. Please <Link to="/signin" className="font-medium underline">sign in</Link> or <Link to="/signup" className="font-medium underline">create an account</Link>.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {userProfileError && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>User Profile Error</AlertTitle>
-                  <AlertDescription>{userProfileError}</AlertDescription>
-                </Alert>
-              )}
-
-              {!bucketExists && (
-                <Alert className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Limited Functionality</AlertTitle>
-                  <AlertDescription>
-                    Image upload functionality is limited. You can still proceed with image URLs.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Property Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Luxury 3-bedroom apartment" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                              <Input className="pl-10" placeholder="250000" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+    <div className="container max-w-4xl py-6 space-y-6">
+      <h1 className="text-3xl font-bold">Submit Property Information</h1>
+      <p className="text-muted-foreground">Submit details about properties in your area to earn rewards. The more accurate and complete the information, the more tokens you'll earn!</p>
+      
+      {!bucketExists && (
+        <Alert variant="warning">
+          <AlertTitle>Storage Not Available</AlertTitle>
+          <AlertDescription>
+            Image upload is not available at the moment. You can still submit property details without images.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Submission Failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {submissionResult ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-green-600">Submission Successful!</CardTitle>
+            <CardDescription>Your property information has been submitted for review.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>You've earned <span className="font-bold">{submissionResult.tokensAwarded}</span> tokens for this submission!</p>
+            <p className="text-muted-foreground mt-2">Redirecting to home page...</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Property Details</CardTitle>
+            <CardDescription>Fill out the form with accurate property information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Property Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Modern Apartment in Downtown" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Price</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Provide a detailed description of the property" 
-                            className="min-h-[120px]" 
-                            {...field} 
-                          />
+                          <Input type="number" min="0" placeholder="250000" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="location"
@@ -536,220 +309,171 @@ const SubmitProperty = () => {
                       <FormItem>
                         <FormLabel>Location</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                            <Input className="pl-10" placeholder="Lagos, Nigeria" {...field} />
-                          </div>
+                          <Input placeholder="Lagos, Nigeria" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="bedrooms"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bedrooms</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="3" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="bathrooms"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bathrooms</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="2" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="area"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Area (sqft)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="1500" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Property Type</FormLabel>
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...field}
-                          >
-                            <option value="house">House</option>
-                            <option value="apartment">Apartment</option>
-                            <option value="commercial">Commercial</option>
-                            <option value="land">Land</option>
-                          </select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Listing Status</FormLabel>
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...field}
-                          >
-                            <option value="sale">For Sale</option>
-                            <option value="rent">For Rent</option>
-                          </select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Property Images</Label>
-                    
-                    {uploadError && (
-                      <Alert variant="destructive" className="mb-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{uploadError}</AlertDescription>
-                      </Alert>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="bedrooms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bedrooms</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" placeholder="3" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {imageUrls.map((url, index) => (
-                        <div key={index} className="relative group">
-                          <img 
-                            src={url} 
-                            alt={`Property image ${index + 1}`} 
-                            className="h-24 w-24 object-cover rounded-md border border-gray-200"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "/placeholder.svg"; 
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                      
-                      {imageUrls.length === 0 && (
-                        <div className="h-24 w-24 rounded-md border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                          <p className="text-xs text-center px-2">No images</p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-                      
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="border-dashed flex-grow"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                      >
-                        <Upload className="mr-2 h-4 w-4" /> 
-                        Upload Images
-                      </Button>
-                      
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="border-dashed flex-grow"
-                        onClick={handleAddImageUrl}
-                      >
-                        <Image className="mr-2 h-4 w-4" /> 
-                        Add Image URL
-                      </Button>
-                    </div>
-                    
-                    <FormDescription>
-                      Upload images or add URLs. Adding high-quality images increases your token reward. Max 5MB per image.
-                    </FormDescription>
-                  </div>
-
-                  <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
-                    <h3 className="text-lg font-medium text-blue-800 mb-2">Earn Tokens</h3>
-                    <p className="text-blue-700 mb-2">
-                      Complete the form to earn tokens! More detailed submissions earn more tokens.
-                    </p>
-                    <ul className="text-sm text-blue-600 space-y-1">
-                      <li className="flex items-center">
-                        <Check className="h-4 w-4 mr-2 text-green-500" /> Basic information: 10 tokens
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-4 w-4 mr-2 text-green-500" /> Detailed description: +5 tokens
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-4 w-4 mr-2 text-green-500" /> Complete specifications: +15 tokens
-                      </li>
-                      <li className="flex items-center">
-                        <Check className="h-4 w-4 mr-2 text-green-500" /> Images: up to +20 tokens
-                      </li>
-                    </ul>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-                    disabled={isSubmitting || isUploading || !user}
-                  >
-                    {isSubmitting || isUploading ? (
-                      <span className="flex items-center">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                        {isUploading ? "Uploading Images..." : "Submitting..."}
-                      </span>
-                    ) : (
-                      <>Submit Property & Earn Tokens</>
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="bathrooms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bathrooms</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" step="0.5" placeholder="2" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="area"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Area (sq ft/m)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" placeholder="1200" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select property type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="house">House</SelectItem>
+                            <SelectItem value="apartment">Apartment</SelectItem>
+                            <SelectItem value="commercial">Commercial</SelectItem>
+                            <SelectItem value="land">Land</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Listing Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select listing status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="sale">For Sale</SelectItem>
+                            <SelectItem value="rent">For Rent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Provide a detailed description of the property..." 
+                          className="min-h-[120px]" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {bucketExists && (
+                  <div>
+                    <FormLabel className="block mb-2">Property Images</FormLabel>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageChange}
+                      className="mb-4"
+                    />
+                    
+                    {imageUrls.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                        {imageUrls.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={url} 
+                              alt={`Preview ${index}`} 
+                              className="w-full h-24 object-cover rounded-md" 
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Submitting...' : 'Submit Property Information'}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+          <CardFooter className="flex justify-center border-t pt-4">
+            <p className="text-sm text-muted-foreground text-center">
+              By submitting this information, you confirm that all details are accurate to the best of your knowledge.
+            </p>
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 };
