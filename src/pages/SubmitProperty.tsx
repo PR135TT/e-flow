@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import { db } from "@/lib/database";
 import { AuthContext } from "@/App";
 import { supabase } from "@/lib/supabase";
@@ -39,13 +38,33 @@ const SubmitProperty = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bucketExists, setBucketExists] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
+    const checkBucket = async () => {
+      try {
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        if (error) {
+          console.error("Error listing buckets:", error);
+          return;
+        }
+        const exists = buckets?.some(bucket => bucket.name === 'properties-images');
+        setBucketExists(exists || false);
+        console.log("Storage bucket exists:", exists);
+      } catch (error) {
+        console.error("Error checking bucket:", error);
+      }
+    };
+    
+    checkBucket();
+  }, []);
+
+  useEffect(() => {
     if (!user) {
       toast.error("Please sign in to submit a property");
       navigate("/signin", { state: { returnUrl: "/submit-property" } });
     }
-  });
+  }, [user, navigate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,20 +136,16 @@ const SubmitProperty = () => {
     const uploadedUrls: string[] = [];
 
     try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'properties-images');
-      
       if (!bucketExists) {
-        await supabase.storage.createBucket('properties-images', {
-          public: true,
-          fileSizeLimit: 5 * 1024 * 1024
-        });
+        console.log("Storage bucket doesn't exist. Images will be uploaded as URLs only.");
+        toast.warning("Storage setup incomplete. Images will be handled as URLs only.");
+        return imageUrls.filter(url => url.startsWith('http'));
       }
 
       for (const file of imageFiles) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { data, error } = await supabase.storage
           .from('properties-images')
@@ -152,7 +167,8 @@ const SubmitProperty = () => {
     } catch (error) {
       console.error("Error uploading images:", error);
       setUploadError("Failed to upload images. Please try again.");
-      return [];
+      toast.error("Failed to upload images. Using URLs only.");
+      return imageUrls.filter(url => url.startsWith('http'));
     } finally {
       setIsUploading(false);
     }
@@ -181,12 +197,16 @@ const SubmitProperty = () => {
     setIsSubmitting(true);
 
     try {
-      const uploadedImageUrls = await uploadImages();
+      let allImageUrls: string[] = [];
       
-      const allImageUrls = [
-        ...uploadedImageUrls,
-        ...imageUrls.filter(url => url.startsWith('http'))
-      ];
+      const validHttpUrls = imageUrls.filter(url => url.startsWith('http'));
+      
+      if (imageFiles.length > 0) {
+        const uploadedImageUrls = await uploadImages();
+        allImageUrls = [...validHttpUrls, ...(uploadedImageUrls || [])];
+      } else {
+        allImageUrls = validHttpUrls;
+      }
 
       const propertyData = {
         title: values.title,
@@ -198,29 +218,103 @@ const SubmitProperty = () => {
         area: values.area ? Number(values.area) : null,
         type: values.type,
         status: values.status,
-        images: allImageUrls
+        images: allImageUrls,
+        owner_id: user.id
       };
 
-      const result = await db.submitPropertyInfo(user.id, propertyData);
+      console.log("Submitting property data:", propertyData);
+      
+      const { data: newProperty, error: propertyError } = await supabase
+        .from('properties')
+        .insert({
+          title: propertyData.title,
+          description: propertyData.description,
+          price: propertyData.price,
+          location: propertyData.location,
+          bedrooms: propertyData.bedrooms,
+          bathrooms: propertyData.bathrooms,
+          area: propertyData.area,
+          type: propertyData.type,
+          status: propertyData.status,
+          images: propertyData.images,
+          owner_id: user.id,
+          is_approved: false
+        })
+        .select()
+        .single();
 
-      if (result) {
-        toast.success(`Property submitted successfully! You earned ${result.tokensAwarded} tokens.`);
-        form.reset();
-        setImageUrls([]);
-        setImageFiles([]);
-        
-        setTimeout(() => {
-          navigate("/properties");
-        }, 2000);
-      } else {
-        toast.error("Failed to submit property. Please try again.");
+      if (propertyError) {
+        console.error("Error submitting property:", propertyError);
+        toast.error(`Failed to submit property: ${propertyError.message}`);
+        return;
       }
+
+      const tokensAwarded = calculateTokenReward(propertyData);
+
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('property_submissions')
+        .insert({
+          property_id: newProperty.id,
+          user_id: user.id,
+          status: 'pending',
+          tokens_awarded: tokensAwarded,
+          property_reference_id: newProperty.id
+        })
+        .select()
+        .single();
+
+      if (submissionError) {
+        console.error("Error creating submission:", submissionError);
+        toast.error(`Submission created but reward tracking failed: ${submissionError.message}`);
+      } else {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ tokens: supabase.sql`tokens + ${tokensAwarded}` })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error("Error updating tokens:", updateError);
+          toast.error("Property submitted but tokens couldn't be awarded");
+        } else {
+          toast.success(`Property submitted successfully! You earned ${tokensAwarded} tokens.`);
+        }
+      }
+
+      form.reset();
+      setImageUrls([]);
+      setImageFiles([]);
+      
+      setTimeout(() => {
+        navigate("/properties");
+      }, 2000);
+
     } catch (error) {
       console.error("Error submitting property:", error);
-      toast.error("An error occurred while submitting the property");
+      toast.error("An error occurred while submitting the property. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const calculateTokenReward = (propertyData: any) => {
+    let score = 0;
+    
+    if (propertyData.title) score += 2;
+    if (propertyData.price) score += 2;
+    if (propertyData.location) score += 2;
+    if (propertyData.type) score += 2;
+    if (propertyData.status) score += 2;
+    
+    if (propertyData.description && propertyData.description.length > 50) score += 5;
+    
+    if (propertyData.bedrooms !== null) score += 3;
+    if (propertyData.bathrooms !== null) score += 3;
+    if (propertyData.area !== null) score += 3;
+    
+    const imageCount = propertyData.images?.length || 0;
+    score += Math.min(imageCount * 4, 20);
+    
+    return Math.max(score, 10);
   };
 
   return (
@@ -247,6 +341,16 @@ const SubmitProperty = () => {
                   <AlertTitle>Authentication Required</AlertTitle>
                   <AlertDescription>
                     You must be signed in to submit a property. Please <Link to="/signin" className="font-medium underline">sign in</Link> or <Link to="/signup" className="font-medium underline">create an account</Link>.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {!bucketExists && (
+                <Alert variant="warning" className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Limited Functionality</AlertTitle>
+                  <AlertDescription>
+                    Image upload functionality is limited. You can still proceed with image URLs.
                   </AlertDescription>
                 </Alert>
               )}
