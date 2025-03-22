@@ -269,7 +269,7 @@ const SubmitProperty = () => {
       } else {
         const { error: updateError } = await supabase
           .from('users')
-          .update({ tokens: supabase.sql`tokens + ${tokensAwarded}` })
+          .update({ tokens: tokensAwarded })
           .eq('id', user.id);
 
         if (updateError) {
@@ -346,7 +346,7 @@ const SubmitProperty = () => {
               )}
 
               {!bucketExists && (
-                <Alert variant="warning" className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
+                <Alert className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Limited Functionality</AlertTitle>
                   <AlertDescription>
