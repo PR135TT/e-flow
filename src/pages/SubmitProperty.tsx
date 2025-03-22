@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,7 +39,7 @@ const SubmitProperty = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [bucketExists, setBucketExists] = useState(false);
+  const [bucketExists, setBucketExists] = useState(true); // Default to true since we've created the bucket
 
   useEffect(() => {
     const checkBucket = async () => {
@@ -46,6 +47,7 @@ const SubmitProperty = () => {
         const { data: buckets, error } = await supabase.storage.listBuckets();
         if (error) {
           console.error("Error listing buckets:", error);
+          setBucketExists(false);
           return;
         }
         const exists = buckets?.some(bucket => bucket.name === 'properties-images');
@@ -53,6 +55,7 @@ const SubmitProperty = () => {
         console.log("Storage bucket exists:", exists);
       } catch (error) {
         console.error("Error checking bucket:", error);
+        setBucketExists(false);
       }
     };
     
@@ -137,7 +140,6 @@ const SubmitProperty = () => {
 
     try {
       if (!bucketExists) {
-        console.log("Storage bucket doesn't exist. Images will be uploaded as URLs only.");
         toast.warning("Storage setup incomplete. Images will be handled as URLs only.");
         return imageUrls.filter(url => url.startsWith('http'));
       }
@@ -267,16 +269,31 @@ const SubmitProperty = () => {
         console.error("Error creating submission:", submissionError);
         toast.error(`Submission created but reward tracking failed: ${submissionError.message}`);
       } else {
-        const { error: updateError } = await supabase
+        // Update user's tokens (add the new tokens to their existing balance)
+        const { data: userData, error: userFetchError } = await supabase
           .from('users')
-          .update({ tokens: tokensAwarded })
-          .eq('id', user.id);
-
-        if (updateError) {
-          console.error("Error updating tokens:", updateError);
+          .select('tokens')
+          .eq('id', user.id)
+          .single();
+          
+        if (userFetchError) {
+          console.error("Error fetching user tokens:", userFetchError);
           toast.error("Property submitted but tokens couldn't be awarded");
         } else {
-          toast.success(`Property submitted successfully! You earned ${tokensAwarded} tokens.`);
+          const currentTokens = userData.tokens || 0;
+          const newTokenAmount = currentTokens + tokensAwarded;
+          
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ tokens: newTokenAmount })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error("Error updating tokens:", updateError);
+            toast.error("Property submitted but tokens couldn't be awarded");
+          } else {
+            toast.success(`Property submitted successfully! You earned ${tokensAwarded} tokens.`);
+          }
         }
       }
 
