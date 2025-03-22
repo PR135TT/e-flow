@@ -40,6 +40,8 @@ const SubmitProperty = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bucketExists, setBucketExists] = useState(true); // Default to true since we've created the bucket
+  const [isUserProfileChecked, setIsUserProfileChecked] = useState(false);
+  const [userProfileError, setUserProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkBucket = async () => {
@@ -62,6 +64,42 @@ const SubmitProperty = () => {
     checkBucket();
   }, []);
 
+  // Check if user profile exists in the users table
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        // Check if the user exists in the users table
+        const { data, error } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (error && error.code === 'PGRST116') {
+          console.log("User profile doesn't exist. Will create one when submitting property.");
+          setIsUserProfileChecked(true);
+          return;
+        }
+
+        if (error) {
+          console.error("Error checking user profile:", error);
+          setUserProfileError("Error checking your user profile. Please try again.");
+          return;
+        }
+
+        console.log("User profile exists:", data);
+        setIsUserProfileChecked(true);
+      } catch (error) {
+        console.error("Error in checkUserProfile:", error);
+        setUserProfileError("Error checking your user profile. Please try again.");
+      }
+    };
+
+    checkUserProfile();
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       toast.error("Please sign in to submit a property");
@@ -83,6 +121,57 @@ const SubmitProperty = () => {
       status: "sale"
     }
   });
+
+  // Create a user profile if one doesn't exist
+  const ensureUserProfile = async () => {
+    if (!user) return false;
+    
+    try {
+      // Check if the user exists in the users table
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      if (error && error.code === 'PGRST116') {
+        // User doesn't exist, create a profile
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            phone: user.phone || '',
+            location: '',
+            user_type: 'seller',
+            tokens: 0
+          });
+        
+        if (insertError) {
+          console.error("Error creating user profile:", insertError);
+          toast.error("Failed to create your user profile. Please try again.");
+          return false;
+        }
+        
+        toast.success("User profile created successfully!");
+        return true;
+      }
+      
+      if (error) {
+        console.error("Error checking user profile:", error);
+        toast.error("Error checking your user profile. Please try again.");
+        return false;
+      }
+      
+      // User exists
+      return true;
+    } catch (error) {
+      console.error("Error in ensureUserProfile:", error);
+      toast.error("Error with your user profile. Please try again.");
+      return false;
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -199,6 +288,13 @@ const SubmitProperty = () => {
     setIsSubmitting(true);
 
     try {
+      // First ensure the user profile exists
+      const userProfileCreated = await ensureUserProfile();
+      if (!userProfileCreated) {
+        setIsSubmitting(false);
+        return;
+      }
+      
       let allImageUrls: string[] = [];
       
       const validHttpUrls = imageUrls.filter(url => url.startsWith('http'));
@@ -359,6 +455,14 @@ const SubmitProperty = () => {
                   <AlertDescription>
                     You must be signed in to submit a property. Please <Link to="/signin" className="font-medium underline">sign in</Link> or <Link to="/signup" className="font-medium underline">create an account</Link>.
                   </AlertDescription>
+                </Alert>
+              )}
+
+              {userProfileError && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>User Profile Error</AlertTitle>
+                  <AlertDescription>{userProfileError}</AlertDescription>
                 </Alert>
               )}
 
