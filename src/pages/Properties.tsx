@@ -1,20 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MapPin, Home, Search, Loader2, PlusCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Home, Search, Loader2, PlusCircle, Clock } from "lucide-react";
+import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { db, Property } from "@/lib/database";
 import { formatCurrency } from "@/lib/utils";
 import { Header } from "@/components/Header";
+import { AuthContext } from "@/App";
+import { supabase } from "@/lib/supabase";
 
 const Properties = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [properties, setProperties] = useState<Property[]>([]);
+  const [pendingProperties, setPendingProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPendingLoading, setIsPendingLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -32,6 +38,56 @@ const Properties = () => {
 
     fetchProperties();
   }, []);
+
+  useEffect(() => {
+    const fetchPendingProperties = async () => {
+      if (!user) {
+        setIsPendingLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('is_approved', false)
+          .eq('owner_id', user.id);
+          
+        if (error) {
+          console.error("Error fetching pending properties:", error);
+          return;
+        }
+        
+        const pendingPropertiesData = data.map(property => ({
+          id: property.id,
+          title: property.title,
+          description: property.description,
+          price: Number(property.price),
+          location: property.location,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          area: property.area ? Number(property.area) : null,
+          type: property.type,
+          status: property.status,
+          images: property.images || [],
+          ownerId: property.owner_id,
+          agentId: property.agent_id,
+          companyId: property.company_id,
+          isApproved: property.is_approved,
+          createdAt: new Date(property.created_at),
+          updatedAt: new Date(property.updated_at)
+        } as Property));
+        
+        setPendingProperties(pendingPropertiesData);
+      } catch (error) {
+        console.error("Error fetching pending properties:", error);
+      } finally {
+        setIsPendingLoading(false);
+      }
+    };
+
+    fetchPendingProperties();
+  }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +122,55 @@ const Properties = () => {
   const handleUploadProperty = () => {
     navigate('/submit-property');
   };
+
+  const renderPropertyCard = (property: Property, isPending = false) => (
+    <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="h-48 bg-gray-200 overflow-hidden relative">
+        {isPending && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 flex items-center gap-1">
+              <Clock className="h-3 w-3" /> Pending Approval
+            </Badge>
+          </div>
+        )}
+        {property.images && property.images.length > 0 ? (
+          <img 
+            src={property.images[0]} 
+            alt={property.title} 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+            <Home className="h-12 w-12" />
+          </div>
+        )}
+      </div>
+      <CardHeader>
+        <CardTitle>{property.title}</CardTitle>
+        <CardDescription>{property.location}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="font-semibold text-lg">{formatCurrency(property.price)}</p>
+        <div className="flex items-center mt-2 text-sm text-gray-500">
+          <span className="mr-3">{displayFeature(property.bedrooms, "Beds")}</span>
+          <span className="mr-3">{displayFeature(property.bathrooms, "Baths")}</span>
+          <span>{displayFeature(property.area, "sqft")}</span>
+        </div>
+        <div className="mt-4 flex items-center text-sm">
+          <MapPin className="h-4 w-4 text-red-500 mr-1" />
+          <span>{property.location}</span>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button 
+          className="w-full"
+          onClick={() => handleViewDetails(property.id)}
+        >
+          View Details
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -102,6 +207,32 @@ const Properties = () => {
 
       <section className="py-12 bg-gray-50 flex-grow">
         <div className="container mx-auto px-4">
+          {user && pendingProperties.length > 0 && (
+            <div className="mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Your Pending Submissions</h2>
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 flex items-center gap-1 px-3 py-1">
+                  <Clock className="h-4 w-4 mr-1" /> Awaiting Approval
+                </Badge>
+              </div>
+              
+              {isPendingLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <span className="ml-2">Loading your submissions...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pendingProperties.map(property => renderPropertyCard(property, true))}
+                </div>
+              )}
+              
+              <div className="mt-6 text-sm text-gray-500 bg-gray-100 p-4 rounded-md">
+                <p>Your property submissions are under review by our team. Once approved, they will appear in the Available Properties section below.</p>
+              </div>
+            </div>
+          )}
+          
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Available Properties</h1>
             
@@ -137,47 +268,7 @@ const Properties = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProperties.map((property) => (
-                <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="h-48 bg-gray-200 overflow-hidden">
-                    {property.images && property.images.length > 0 ? (
-                      <img 
-                        src={property.images[0]} 
-                        alt={property.title} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
-                        <Home className="h-12 w-12" />
-                      </div>
-                    )}
-                  </div>
-                  <CardHeader>
-                    <CardTitle>{property.title}</CardTitle>
-                    <CardDescription>{property.location}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="font-semibold text-lg">{formatCurrency(property.price)}</p>
-                    <div className="flex items-center mt-2 text-sm text-gray-500">
-                      <span className="mr-3">{displayFeature(property.bedrooms, "Beds")}</span>
-                      <span className="mr-3">{displayFeature(property.bathrooms, "Baths")}</span>
-                      <span>{displayFeature(property.area, "sqft")}</span>
-                    </div>
-                    <div className="mt-4 flex items-center text-sm">
-                      <MapPin className="h-4 w-4 text-red-500 mr-1" />
-                      <span>{property.location}</span>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      className="w-full"
-                      onClick={() => handleViewDetails(property.id)}
-                    >
-                      View Details
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+              {filteredProperties.map(property => renderPropertyCard(property))}
             </div>
           )}
         </div>
