@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -95,7 +96,7 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-primary hover:bg-primary/90" 
+          className="w-full bg-blue-600 hover:bg-blue-700" 
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign In"}
