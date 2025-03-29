@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { db, Property } from "@/lib/database/types";
+import { Property } from "@/lib/database/types";
+import { db } from "@/lib/database";
 import { Header } from "@/components/Header";
 import { PageFooter } from "@/components/PageFooter";
 import { PropertyCard } from "@/components/properties/PropertyCard";
