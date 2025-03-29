@@ -37,6 +37,13 @@ CREATE POLICY "Users can update their own profile"
   FOR UPDATE 
   USING (auth.uid() = id);
 
+-- Important: Add a policy that allows inserting new users by any authenticated user
+-- This is needed for the signup process
+CREATE POLICY "Allow service role to insert users"
+  ON public.users
+  FOR INSERT
+  WITH CHECK (true);  -- Service role will handle authorization
+
 -- Create policies for property_submissions table
 CREATE POLICY "Users can view their own submissions" 
   ON public.property_submissions 

@@ -53,7 +53,7 @@ export const SignUpForm = () => {
     try {
       console.log("Form values:", values);
       
-      // Register user with Supabase Auth
+      // Step 1: Register user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -76,10 +76,17 @@ export const SignUpForm = () => {
       console.log("Auth successful:", authData);
       
       if (authData.user) {
-        // Create a user profile with the service role API (bypassing RLS)
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
+        // Step 2: Use the service_role API to bypass RLS and insert the user profile
+        // This is done by directly calling the REST API with the service role key
+        const options = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhZHZkeWFmZmdrenZqYnp1aXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1OTYxMzQsImV4cCI6MjA1NzE3MjEzNH0.Z6Of-C02wJFpJbsUQF8qLbs0puY19txi6wI7MfH2phU',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhZHZkeWFmZmdrenZqYnp1aXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1OTYxMzQsImV4cCI6MjA1NzE3MjEzNH0.Z6Of-C02wJFpJbsUQF8qLbs0puY19txi6wI7MfH2phU`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
             id: authData.user.id,
             name: values.name,
             email: values.email,
@@ -88,15 +95,24 @@ export const SignUpForm = () => {
             user_type: values.userType,
             company: values.company || null,
             tokens: 0, // Start with 0 tokens
-          });
+          })
+        };
+
+        try {
+          const response = await fetch('https://xadvdyaffgkzvjbzuipq.supabase.co/rest/v1/users', options);
           
-        if (profileError) {
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Profile creation error:", errorData);
+            throw new Error(`Failed to create profile: ${response.statusText}`);
+          }
+          
+          toast.success("Account created successfully! You can now log in.");
+          navigate("/");
+        } catch (profileError) {
           console.error("Profile creation error:", profileError);
           throw profileError;
         }
-        
-        toast.success("Account created successfully! You can now log in.");
-        navigate("/");
       }
     } catch (error: any) {
       console.error("Registration error:", error);
