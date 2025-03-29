@@ -18,6 +18,8 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
 import SubmitProperty from "./pages/SubmitProperty";
+import AdminApplication from "./pages/AdminApplication";
+import AdminManagement from "./pages/AdminManagement";
 
 export const AuthContext = createContext<{
   user: any | null;
@@ -68,6 +70,8 @@ const App = () => {
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/submit-property" element={<SubmitProperty />} />
+              <Route path="/admin-application" element={<AdminApplication />} />
+              <Route path="/admin-management" element={<AdminManagement />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

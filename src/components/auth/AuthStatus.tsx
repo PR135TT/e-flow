@@ -2,7 +2,7 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "@/App";
-import { UserCheck, UserX } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   NavigationMenu,
@@ -16,9 +16,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export const AuthStatus = () => {
   const { user } = useContext(AuthContext);
+  const { isAdmin } = useAdmin();
   
   const handleSignOut = async () => {
     try {
@@ -38,7 +40,11 @@ export const AuthStatus = () => {
             <NavigationMenuItem>
               <NavigationMenuTrigger className="bg-transparent hover:bg-blue-800 px-3">
                 <div className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-green-400" />
+                  {isAdmin ? (
+                    <ShieldCheck className="h-5 w-5 text-yellow-400" />
+                  ) : (
+                    <UserCheck className="h-5 w-5 text-green-400" />
+                  )}
                   <span className="hidden sm:inline">Signed In</span>
                   <Avatar className="h-8 w-8 border-2 border-green-400">
                     <AvatarFallback className="bg-blue-700 text-white text-xs">
@@ -48,14 +54,37 @@ export const AuthStatus = () => {
                 </div>
               </NavigationMenuTrigger>
               <NavigationMenuContent>
-                <div className="w-[200px] p-2">
+                <div className="w-[220px] p-2">
                   <div className="mb-2 p-2">
                     <p className="text-sm font-medium">Signed in as:</p>
                     <p className="text-xs truncate">{user.email}</p>
+                    {isAdmin && (
+                      <span className="inline-flex items-center mt-1 text-xs font-medium text-yellow-600">
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+                        Administrator
+                      </span>
+                    )}
                   </div>
+                  
+                  {isAdmin && (
+                    <Link 
+                      to="/admin-management"
+                      className="block w-full p-2 text-sm rounded-md text-left hover:bg-gray-100 mb-1"
+                    >
+                      Admin Management
+                    </Link>
+                  )}
+                  
+                  <Link 
+                    to="/admin-application"
+                    className="block w-full p-2 text-sm rounded-md text-left hover:bg-gray-100 mb-1"
+                  >
+                    {isAdmin ? "Admin Status" : "Apply for Admin"}
+                  </Link>
+                  
                   <Button 
                     variant="destructive" 
-                    className="w-full" 
+                    className="w-full mt-2" 
                     onClick={handleSignOut}
                   >
                     Sign Out

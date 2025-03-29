@@ -10,12 +10,14 @@ import { Loader2, CheckCircle, XCircle, Home, MapPin } from "lucide-react";
 import { db, Property } from "@/lib/database";
 import { AuthContext } from "@/App";
 import { formatCurrency } from "@/lib/utils";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const PropertyApproval = () => {
   const [pendingProperties, setPendingProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<string[]>([]);
   const { user } = useContext(AuthContext);
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,6 +43,14 @@ const PropertyApproval = () => {
 
     fetchPendingProperties();
   }, [user, navigate]);
+
+  // If not an admin, redirect to admin application page
+  useEffect(() => {
+    if (!isAdminLoading && !isAdmin && user) {
+      navigate('/admin-application');
+      toast.error("You need administrator privileges to access this page");
+    }
+  }, [isAdmin, isAdminLoading, user, navigate]);
 
   const handleApprove = async (propertyId: string) => {
     setProcessingIds(prev => [...prev, propertyId]);
@@ -88,6 +98,22 @@ const PropertyApproval = () => {
     navigate(`/property/${propertyId}`);
   };
 
+  if (isAdminLoading || isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex justify-center items-center py-12 flex-grow">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-lg">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // Will be redirected by the useEffect hook
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -100,12 +126,7 @@ const PropertyApproval = () => {
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-lg">Loading pending properties...</span>
-          </div>
-        ) : pendingProperties.length === 0 ? (
+        {pendingProperties.length === 0 ? (
           <div className="bg-gray-50 rounded-lg p-8 text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold mb-2">All Caught Up!</h2>
@@ -163,35 +184,37 @@ const PropertyApproval = () => {
                     View Full Details
                   </Button>
                   
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    <Button 
-                      variant="outline" 
-                      className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
-                      onClick={() => handleApprove(property.id)}
-                      disabled={processingIds.includes(property.id)}
-                    >
-                      {processingIds.includes(property.id) ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                      )}
-                      Approve
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
-                      onClick={() => handleReject(property.id)}
-                      disabled={processingIds.includes(property.id)}
-                    >
-                      {processingIds.includes(property.id) ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <XCircle className="h-4 w-4 mr-2" />
-                      )}
-                      Reject
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      <Button 
+                        variant="outline" 
+                        className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                        onClick={() => handleApprove(property.id)}
+                        disabled={processingIds.includes(property.id)}
+                      >
+                        {processingIds.includes(property.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Approve
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
+                        onClick={() => handleReject(property.id)}
+                        disabled={processingIds.includes(property.id)}
+                      >
+                        {processingIds.includes(property.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Reject
+                      </Button>
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             ))}
