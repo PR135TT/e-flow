@@ -127,20 +127,17 @@ export const db = {
       return null;
     }
     
-    // Calculate token reward based on how complete the property data is
-    let completenessScore = 0;
-    let possibleFields = 0;
+    // Updated token calculation based on specific criteria
+    let tokensAwarded = 5; // Base 5 tokens for property submission
     
-    for (const key in propertyInfo) {
-      possibleFields++;
-      if (propertyInfo[key as keyof Partial<Property>] !== undefined) {
-        completenessScore++;
-      }
+    // Additional tokens for more complete submissions
+    if (propertyInfo.description && propertyInfo.description.length > 50) {
+      tokensAwarded += 2; // Bonus for detailed description
     }
     
-    // Base tokens (10) + bonus for complete information
-    const completenessPercentage = possibleFields > 0 ? completenessScore / possibleFields : 0;
-    const tokensAwarded = Math.floor(10 + (completenessPercentage * 40)); // 10-50 tokens
+    if (propertyInfo.images && propertyInfo.images.length > 0) {
+      tokensAwarded += 1; // Bonus for adding images
+    }
     
     // Create a property submission record
     const { data: submissionData, error: submissionError } = await supabase
