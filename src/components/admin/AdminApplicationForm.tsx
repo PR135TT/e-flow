@@ -1,5 +1,5 @@
 
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,7 @@ export const AdminApplicationForm = () => {
   const { user } = useContext(AuthContext);
 
   // Check if user has already applied
-  useState(() => {
+  useEffect(() => {
     const checkApplication = async () => {
       if (!user) return;
       
