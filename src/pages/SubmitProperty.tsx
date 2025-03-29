@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,9 +13,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { db } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
-import { useEffect as useEffectWithLayout, useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-// Define form schema
 const formSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
   description: z.string().min(20, { message: 'Description must be at least 20 characters' }),
@@ -40,9 +38,8 @@ const SubmitProperty = () => {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [bucketExists, setBucketExists] = useState(true); // Default to true
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
-  // Create form
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,7 +55,6 @@ const SubmitProperty = () => {
     },
   });
 
-  // Check if the storage bucket exists
   useEffect(() => {
     const checkBucket = async () => {
       try {
@@ -78,35 +74,29 @@ const SubmitProperty = () => {
     checkBucket();
   }, []);
 
-  // Handle image file selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setImageFiles(prev => [...prev, ...newFiles]);
       
-      // Create preview URLs for the images
       const newUrls = newFiles.map(file => URL.createObjectURL(file));
       setImageUrls(prev => [...prev, ...newUrls]);
     }
   };
 
-  // Remove image from preview
   const removeImage = (index: number) => {
     setImageFiles(prev => prev.filter((_, i) => i !== index));
     setImageUrls(prev => {
-      // Revoke the URL to prevent memory leaks
       URL.revokeObjectURL(prev[index]);
       return prev.filter((_, i) => i !== index);
     });
   };
 
-  // Handle form submission
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Get current user's session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -121,23 +111,19 @@ const SubmitProperty = () => {
       
       const userId = session.user.id;
       
-      // Check if user exists in the users table
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
       
-      // If user doesn't exist in our users table, create a profile
       if (userError || !userData) {
-        // Get user details from auth
         const { data: userInfo } = await supabase.auth.getUser();
         
         if (!userInfo.user) {
           throw new Error('Could not retrieve user information');
         }
         
-        // Create user profile with default values
         const { error: createUserError } = await supabase
           .from('users')
           .insert({
@@ -155,7 +141,6 @@ const SubmitProperty = () => {
         }
       }
       
-      // Upload images if the bucket exists
       let imageUrls: string[] = [];
       
       if (bucketExists && imageFiles.length > 0) {
@@ -171,7 +156,6 @@ const SubmitProperty = () => {
             continue;
           }
           
-          // Get public URL for the uploaded image
           const { data: urlData } = await supabase.storage
             .from('properties-images')
             .getPublicUrl(filePath);
@@ -182,7 +166,6 @@ const SubmitProperty = () => {
         }
       }
       
-      // Submit property info
       const propertySubmission = await db.submitPropertyInfo(userId, {
         title: data.title,
         description: data.description,
@@ -202,7 +185,6 @@ const SubmitProperty = () => {
       
       setSubmissionResult(propertySubmission);
       
-      // Update user tokens
       const tokensAwarded = propertySubmission.tokensAwarded;
       const newTokens = await db.incrementUserTokens(userId, tokensAwarded);
       
@@ -210,13 +192,11 @@ const SubmitProperty = () => {
         console.error('Failed to update tokens');
       }
       
-      // Success notification
       toast.success('Property submitted successfully', {
         description: `You've earned ${tokensAwarded} tokens!`,
         duration: 5000,
       });
       
-      // Redirect to the home page after a delay
       setTimeout(() => {
         navigate('/');
       }, 3000);
@@ -238,7 +218,7 @@ const SubmitProperty = () => {
       <p className="text-muted-foreground">Submit details about properties in your area to earn rewards. The more accurate and complete the information, the more tokens you'll earn!</p>
       
       {!bucketExists && (
-        <Alert variant="warning">
+        <Alert variant="destructive">
           <AlertTitle>Storage Not Available</AlertTitle>
           <AlertDescription>
             Image upload is not available at the moment. You can still submit property details without images.
