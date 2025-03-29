@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { AuthStatus } from "./auth/AuthStatus";
 import { useAdmin } from "@/hooks/useAdmin";
+import { HelpCircle } from "lucide-react";
 
 export const Header = () => {
   const { isAdmin } = useAdmin();
@@ -21,7 +22,13 @@ export const Header = () => {
               Admin Application
             </Link>
           </div>
-          <AuthStatus />
+          <div className="flex items-center space-x-4">
+            <Link to="/help" className="text-gray-300 hover:text-white flex items-center">
+              <HelpCircle className="mr-1 h-4 w-4" />
+              Help
+            </Link>
+            <AuthStatus />
+          </div>
         </div>
       </div>
     </header>

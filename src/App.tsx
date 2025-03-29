@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import SubmitProperty from "./pages/SubmitProperty";
 import AdminApplication from "./pages/AdminApplication";
 import AdminManagement from "./pages/AdminManagement";
+import HelpCenter from "./pages/HelpCenter";
 
 export const AuthContext = createContext<{
   user: any | null;
@@ -72,6 +73,7 @@ const App = () => {
               <Route path="/submit-property" element={<SubmitProperty />} />
               <Route path="/admin-application" element={<AdminApplication />} />
               <Route path="/admin-management" element={<AdminManagement />} />
+              <Route path="/help" element={<HelpCenter />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

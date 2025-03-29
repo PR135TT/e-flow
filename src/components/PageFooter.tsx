@@ -11,6 +11,7 @@ export const PageFooter = () => {
           <Link to="/analytics" className="text-gray-400 hover:text-white mx-2">Analytics</Link>
           <Link to="/tokens" className="text-gray-400 hover:text-white mx-2">Tokens</Link>
           <Link to="/blog" className="text-gray-400 hover:text-white mx-2">Blog</Link>
+          <Link to="/help" className="text-gray-400 hover:text-white mx-2">Help Center</Link>
         </div>
       </div>
     </footer>
