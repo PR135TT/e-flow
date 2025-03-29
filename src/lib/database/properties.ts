@@ -1,6 +1,5 @@
-
 import { supabase } from '../supabase';
-import { Property } from './types';
+import { Property, PropertySubmission } from './types';
 
 // Property operations
 export const db = {

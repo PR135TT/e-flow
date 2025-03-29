@@ -36,7 +36,7 @@ const SubmitProperty = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [bucketExists, setBucketExists] = useState(true); // Default to true
+  const [bucketExists, setBucketExists] = useState(true);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
