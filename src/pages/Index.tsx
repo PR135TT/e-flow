@@ -86,7 +86,7 @@ const Index = () => {
     } else if (destination === "Market Reports") {
       navigate('/analytics');
     } else if (destination === "Help Center") {
-      toast.info("Help Center coming soon");
+      navigate('/help');
     }
   };
 
