@@ -1,11 +1,50 @@
-
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Award, Star, Users, ArrowRight, Shield, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 const Tokens = () => {
+  const [userTokens, setUserTokens] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserTokens = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          toast.error('Please log in to view your tokens');
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('tokens')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching tokens:', error);
+          toast.error('Could not retrieve token balance');
+        } else {
+          setUserTokens(data?.tokens || 0);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        toast.error('An unexpected error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserTokens();
+  }, []);
+
   const handleButtonClick = (action: string) => {
     console.log(`${action} clicked`);
   };
@@ -36,6 +75,12 @@ const Tokens = () => {
             <p className="text-xl mb-8">
               Get rewarded for contributing to our ecosystem. Earn tokens for adding property data, writing reviews, and engaging with our platform.
             </p>
+            {userTokens !== null && (
+              <div className="mb-4 text-lg font-semibold flex items-center">
+                <Coins className="mr-2 h-6 w-6 text-black" />
+                Your Current Balance: {userTokens} Tokens
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 className="bg-black hover:bg-gray-800 text-white"
