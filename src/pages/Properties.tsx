@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Home, Search, Loader2, PlusCircle, Clock } from "lucide-react";
+
 import { useState, useEffect, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { db, Property } from "@/lib/database";
-import { formatCurrency } from "@/lib/utils";
+import { db, Property } from "@/lib/database/types";
 import { Header } from "@/components/Header";
+import { PageFooter } from "@/components/PageFooter";
+import { PropertyCard } from "@/components/properties/PropertyCard";
+import { SearchBar } from "@/components/properties/SearchBar";
+import { PendingPropertiesSection } from "@/components/properties/PendingPropertiesSection";
+import { AvailablePropertiesSection } from "@/components/properties/AvailablePropertiesSection";
 import { AuthContext } from "@/App";
 import { supabase } from "@/lib/supabase";
 
@@ -115,176 +115,48 @@ const Properties = () => {
     navigate(`/property/${propertyId}`);
   };
 
-  const displayFeature = (value: number | null, unit: string) => {
-    return value ? `${value} ${unit}` : "N/A";
-  };
-
   const handleUploadProperty = () => {
     navigate('/submit-property');
   };
 
-  const renderPropertyCard = (property: Property, isPending = false) => (
-    <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="h-48 bg-gray-200 overflow-hidden relative">
-        {isPending && (
-          <div className="absolute top-2 right-2 z-10">
-            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Pending Approval
-            </Badge>
-          </div>
-        )}
-        {property.images && property.images.length > 0 ? (
-          <img 
-            src={property.images[0]} 
-            alt={property.title} 
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
-            <Home className="h-12 w-12" />
-          </div>
-        )}
-      </div>
-      <CardHeader>
-        <CardTitle>{property.title}</CardTitle>
-        <CardDescription>{property.location}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="font-semibold text-lg">{formatCurrency(property.price)}</p>
-        <div className="flex items-center mt-2 text-sm text-gray-500">
-          <span className="mr-3">{displayFeature(property.bedrooms, "Beds")}</span>
-          <span className="mr-3">{displayFeature(property.bathrooms, "Baths")}</span>
-          <span>{displayFeature(property.area, "sqft")}</span>
-        </div>
-        <div className="mt-4 flex items-center text-sm">
-          <MapPin className="h-4 w-4 text-red-500 mr-1" />
-          <span>{property.location}</span>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          className="w-full"
-          onClick={() => handleViewDetails(property.id)}
-        >
-          View Details
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+  const clearSearch = () => {
+    setSearchQuery("");
+    setFilteredProperties(properties);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <section className="bg-blue-900 text-white py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-            <form onSubmit={handleSearch} className="flex-grow max-w-2xl flex flex-col md:flex-row gap-3">
-              <Input 
-                className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
-                placeholder="Search by location, property type, or price..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Search className="mr-2 h-4 w-4" /> Search
-              </Button>
-            </form>
-            
-            <Button 
-              onClick={handleUploadProperty}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
-            </Button>
-          </div>
-          
-          <div className="text-sm text-white/80 mt-2">
-            Upload property data and earn tokens! Contribute to our database and be rewarded.
-          </div>
-        </div>
-      </section>
+      <SearchBar 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleSearch={handleSearch}
+        handleUploadProperty={handleUploadProperty}
+      />
 
       <section className="py-12 bg-gray-50 flex-grow">
         <div className="container mx-auto px-4">
-          {user && pendingProperties.length > 0 && (
-            <div className="mb-12">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Your Pending Submissions</h2>
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 flex items-center gap-1 px-3 py-1">
-                  <Clock className="h-4 w-4 mr-1" /> Awaiting Approval
-                </Badge>
-              </div>
-              
-              {isPendingLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                  <span className="ml-2">Loading your submissions...</span>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {pendingProperties.map(property => renderPropertyCard(property, true))}
-                </div>
-              )}
-              
-              <div className="mt-6 text-sm text-gray-500 bg-gray-100 p-4 rounded-md">
-                <p>Your property submissions are under review by our team. Once approved, they will appear in the Available Properties section below.</p>
-              </div>
-            </div>
+          {user && (
+            <PendingPropertiesSection 
+              pendingProperties={pendingProperties}
+              isPendingLoading={isPendingLoading}
+              handleViewDetails={handleViewDetails}
+            />
           )}
           
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Available Properties</h1>
-            
-            <Button 
-              variant="outline"
-              onClick={handleUploadProperty}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" /> Submit Your Property
-            </Button>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <span className="ml-2 text-lg">Loading properties...</span>
-            </div>
-          ) : filteredProperties.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-gray-600">No properties found. Please try a different search.</p>
-              {searchQuery && (
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setFilteredProperties(properties);
-                  }}
-                >
-                  Clear Search
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProperties.map(property => renderPropertyCard(property))}
-            </div>
-          )}
+          <AvailablePropertiesSection 
+            filteredProperties={filteredProperties}
+            isLoading={isLoading}
+            searchQuery={searchQuery}
+            handleViewDetails={handleViewDetails}
+            handleUploadProperty={handleUploadProperty}
+            clearSearch={clearSearch}
+          />
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p>&copy; {new Date().getFullYear()} E Flow. All rights reserved.</p>
-          <div className="mt-4">
-            <Link to="/" className="text-gray-400 hover:text-white mx-2">Home</Link>
-            <Link to="/analytics" className="text-gray-400 hover:text-white mx-2">Analytics</Link>
-            <Link to="/tokens" className="text-gray-400 hover:text-white mx-2">Tokens</Link>
-            <Link to="/blog" className="text-gray-400 hover:text-white mx-2">Blog</Link>
-          </div>
-        </div>
-      </footer>
+      <PageFooter />
     </div>
   );
 };
