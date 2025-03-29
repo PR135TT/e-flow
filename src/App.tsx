@@ -9,6 +9,7 @@ import { supabase } from "./lib/supabase";
 import Index from "./pages/Index";
 import Properties from "./pages/Properties";
 import PropertyDetails from "./pages/PropertyDetails";
+import PropertyApproval from "./pages/PropertyApproval";
 import Analytics from "./pages/Analytics";
 import Tokens from "./pages/Tokens";
 import Blog from "./pages/Blog";
@@ -59,6 +60,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/properties" element={<Properties />} />
               <Route path="/property/:id" element={<PropertyDetails />} />
+              <Route path="/property-approval" element={<PropertyApproval />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/tokens" element={<Tokens />} />
               <Route path="/blog" element={<Blog />} />

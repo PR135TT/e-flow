@@ -102,7 +102,6 @@ export const db = {
   },
   
   submitPropertyInfo: async (userId: string, propertyInfo: Partial<Property>) => {
-    // First create the property
     const { data: newProperty, error: propertyError } = await supabase
       .from('properties')
       .insert({
@@ -127,25 +126,22 @@ export const db = {
       return null;
     }
     
-    // Updated token calculation based on specific criteria
-    let tokensAwarded = 5; // Base 5 tokens for property submission
+    let tokensAwarded = 5;
     
-    // Additional tokens for more complete submissions
     if (propertyInfo.description && propertyInfo.description.length > 50) {
-      tokensAwarded += 2; // Bonus for detailed description
+      tokensAwarded += 2;
     }
     
     if (propertyInfo.images && propertyInfo.images.length > 0) {
-      tokensAwarded += 1; // Bonus for adding images
+      tokensAwarded += 1;
     }
     
-    // Create a property submission record
     const { data: submissionData, error: submissionError } = await supabase
       .from('property_submissions')
       .insert({
         property_id: newProperty.id,
         user_id: userId,
-        status: 'pending', // Pending approval
+        status: 'pending',
         tokens_awarded: tokensAwarded,
         property_reference_id: newProperty.id
       })
@@ -166,5 +162,116 @@ export const db = {
       createdAt: new Date(submissionData.created_at),
       propertyReferenceId: submissionData.property_reference_id
     } as PropertySubmission;
+  },
+  
+  getPendingProperties: async () => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('is_approved', false);
+      
+    if (error) {
+      console.error('Error fetching pending properties:', error);
+      return [];
+    }
+    
+    return data.map(property => ({
+      id: property.id,
+      title: property.title,
+      description: property.description,
+      price: Number(property.price),
+      location: property.location,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area ? Number(property.area) : null,
+      type: property.type,
+      status: property.status,
+      images: property.images || [],
+      ownerId: property.owner_id,
+      agentId: property.agent_id,
+      companyId: property.company_id,
+      isApproved: property.is_approved,
+      createdAt: new Date(property.created_at),
+      updatedAt: new Date(property.updated_at)
+    } as Property));
+  },
+  
+  approveProperty: async (propertyId: string) => {
+    const { data: propertyData, error: propertyError } = await supabase
+      .from('properties')
+      .update({ is_approved: true })
+      .eq('id', propertyId)
+      .select()
+      .single();
+      
+    if (propertyError) {
+      console.error('Error approving property:', propertyError);
+      return { success: false, error: propertyError.message };
+    }
+    
+    const { data: submissionData, error: submissionError } = await supabase
+      .from('property_submissions')
+      .update({ status: 'approved' })
+      .eq('property_id', propertyId)
+      .select()
+      .single();
+    
+    if (submissionError) {
+      console.error('Error updating submission status:', submissionError);
+    }
+    
+    if (submissionData) {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('tokens')
+        .eq('id', submissionData.user_id)
+        .single();
+        
+      if (!userError && userData) {
+        const currentTokens = userData.tokens || 0;
+        const newTokens = currentTokens + submissionData.tokens_awarded;
+        
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ tokens: newTokens })
+          .eq('id', submissionData.user_id);
+          
+        if (updateError) {
+          console.error('Error updating user tokens:', updateError);
+        }
+      }
+    }
+    
+    return { 
+      success: true, 
+      property: propertyData,
+      tokensAwarded: submissionData?.tokens_awarded || 0
+    };
+  },
+  
+  rejectProperty: async (propertyId: string) => {
+    const { data: submissionData, error: submissionError } = await supabase
+      .from('property_submissions')
+      .update({ status: 'rejected' })
+      .eq('property_id', propertyId)
+      .select()
+      .single();
+    
+    if (submissionError) {
+      console.error('Error updating submission status:', submissionError);
+      return { success: false, error: submissionError.message };
+    }
+    
+    const { error: propertyError } = await supabase
+      .from('properties')
+      .delete()
+      .eq('id', propertyId);
+      
+    if (propertyError) {
+      console.error('Error deleting property:', propertyError);
+      return { success: false, error: propertyError.message };
+    }
+    
+    return { success: true };
   }
 };
