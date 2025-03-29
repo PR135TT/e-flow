@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhoneCall, Mail, MessageSquare, HelpCircle } from "lucide-react";
 
 const HelpCenter = () => {
-  const supportNumber = "+234 801 234 5678";
+  const supportNumber = "+234 080 8866 7744";
 
   return (
     <Shell>
@@ -184,3 +184,4 @@ const HelpCenter = () => {
 };
 
 export default HelpCenter;
+
