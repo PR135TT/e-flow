@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,7 +24,11 @@ const signInFormSchema = z.object({
 
 type SignInFormValues = z.infer<typeof signInFormSchema>;
 
-export const SignInForm = () => {
+interface SignInFormProps {
+  returnTo?: string;
+}
+
+export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -50,7 +54,7 @@ export const SignInForm = () => {
       }
 
       toast.success("Signed in successfully!");
-      navigate("/");
+      navigate(returnTo);
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast.error(error.message || "Failed to sign in. Please try again.");
@@ -93,6 +97,13 @@ export const SignInForm = () => {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Signing in..." : "Sign In"}
         </Button>
+        
+        <p className="text-center text-sm mt-4">
+          Don't have an account?{" "}
+          <Link to={`/signup${returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`} className="text-blue-600 hover:underline">
+            Sign up
+          </Link>
+        </p>
       </form>
     </Form>
   );

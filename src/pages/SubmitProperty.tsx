@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { db } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AuthContext } from '@/App';
 
 const formSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
@@ -31,14 +32,25 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 const SubmitProperty = () => {
+  const { user, session } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [bucketExists, setBucketExists] = useState(true);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (!user) {
+      toast.error("Please sign in to submit property information", {
+        description: "You need to be logged in to submit property data",
+        duration: 4000,
+      });
+      navigate("/signin", { state: { returnTo: "/submit-property" } });
+    }
+  }, [user, navigate]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -211,6 +223,23 @@ const SubmitProperty = () => {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="container max-w-4xl py-6 space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <Alert>
+              <AlertTitle>Authentication Required</AlertTitle>
+              <AlertDescription>
+                Redirecting to sign in page...
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-4xl py-6 space-y-6">

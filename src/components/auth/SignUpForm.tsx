@@ -27,7 +27,11 @@ import {
 import { supabase } from "@/lib/supabase";
 import { signUpFormSchema, type SignUpFormValues } from "./SignUpFormSchema";
 
-export const SignUpForm = () => {
+interface SignUpFormProps {
+  returnTo?: string;
+}
+
+export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -108,7 +112,7 @@ export const SignUpForm = () => {
           }
           
           toast.success("Account created successfully! You can now log in.");
-          navigate("/");
+          navigate(returnTo);
         } catch (profileError) {
           console.error("Profile creation error:", profileError);
           throw profileError;
@@ -280,7 +284,7 @@ export const SignUpForm = () => {
 
         <p className="text-center text-sm mt-4">
           Already have an account?{" "}
-          <Link to="#" className="text-blue-600 hover:underline">
+          <Link to={`/signin${returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`} className="text-blue-600 hover:underline">
             Log in
           </Link>
         </p>
