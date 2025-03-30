@@ -16,6 +16,8 @@ import Blog from "./pages/Blog";
 import Directory from "./pages/Directory";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import SubmitProperty from "./pages/SubmitProperty";
 import AdminApplication from "./pages/AdminApplication";
@@ -70,6 +72,8 @@ const App = () => {
               <Route path="/directory" element={<Directory />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/submit-property" element={<SubmitProperty />} />
               <Route path="/admin-application" element={<AdminApplication />} />
               <Route path="/admin-management" element={<AdminManagement />} />

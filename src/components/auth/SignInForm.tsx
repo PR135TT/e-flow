@@ -109,6 +109,14 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
                 </div>
               </FormControl>
               <FormMessage />
+              <div className="flex justify-end">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </FormItem>
           )}
         />
