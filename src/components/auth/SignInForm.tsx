@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,7 +67,10 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form 
+        onSubmit={form.handleSubmit(onSubmit)} 
+        className="space-y-6 animate-fade-in"
+      >
         <FormField
           control={form.control}
           name="email"
@@ -111,7 +115,7 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-yellow-500 hover:bg-blue-700" 
+          className="w-full bg-yellow-500 hover:bg-yellow-600" 
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign In"}
