@@ -6,6 +6,7 @@ import { useEffect, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "@/App";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const SignIn = () => {
   const location = useLocation();
@@ -20,6 +21,7 @@ const SignIn = () => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
+        toast.info("You're already signed in");
         navigate(returnTo);
       }
     };
@@ -30,6 +32,7 @@ const SignIn = () => {
   // If user becomes authenticated during the session, redirect them
   useEffect(() => {
     if (user) {
+      toast.info("You're already signed in");
       navigate(returnTo);
     }
   }, [user, navigate, returnTo]);
