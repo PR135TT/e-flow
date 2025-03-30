@@ -112,11 +112,11 @@ const Index = () => {
             <p className="text-xl md:text-2xl mb-8 max-w-2xl">
               Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
             </p>
-            <div className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
-              <form onSubmit={handleSearch} className="flex-grow flex flex-col md:flex-row gap-3">
+            <div className="w-full max-w-3xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
+              <form onSubmit={handleSearch} className="flex-grow max-w-4xl flex flex-col md:flex-row gap-3">
                 <Input 
-                  className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70" 
-                  placeholder="Search by location, property type, or price..."
+                  className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70 md:min-w-[500px] lg:min-w-[600px]" 
+                  placeholder="Search by location, property type, price range, or any property details..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
