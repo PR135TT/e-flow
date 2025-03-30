@@ -2,7 +2,7 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "@/App";
-import { UserCheck, UserX, ShieldCheck, User } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, User, Calendar } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   NavigationMenu,
@@ -72,6 +72,14 @@ export const AuthStatus = () => {
                   >
                     <User className="h-4 w-4 mr-2" />
                     View Profile
+                  </Link>
+                  
+                  <Link 
+                    to="/appointments"
+                    className="block w-full p-2 text-sm rounded-md text-left hover:bg-gray-100 mb-1 flex items-center"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    My Appointments
                   </Link>
                   
                   {isAdmin && (

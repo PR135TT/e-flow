@@ -1,21 +1,26 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db, Property } from "@/lib/database";
 import { formatCurrency } from "@/lib/utils";
 import { ArrowLeft, MapPin, Phone, Mail, Calendar, Home, ShowerHead, Bed, SquareIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { AuthContext } from "@/App";
+import { AppointmentScheduler } from "@/components/appointments/AppointmentScheduler";
 
 const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useContext(AuthContext);
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     const fetchPropertyDetails = async () => {
@@ -84,6 +89,20 @@ const PropertyDetails = () => {
     return value ? `${value} ${unit}` : "N/A";
   };
 
+  const handleScheduleClick = () => {
+    if (!user) {
+      toast.error("Please sign in to schedule a viewing", {
+        action: {
+          label: "Sign In",
+          onClick: () => navigate("/signin?redirect=" + encodeURIComponent(window.location.pathname)),
+        },
+      });
+      return;
+    }
+    
+    setActiveTab("schedule");
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -139,40 +158,57 @@ const PropertyDetails = () => {
               </div>
             )}
 
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Description</h2>
-              <p className="text-gray-600 whitespace-pre-line">{property.description}</p>
-            </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+              <TabsList className="grid grid-cols-2 w-full md:w-[400px] mb-6">
+                <TabsTrigger value="details">Property Details</TabsTrigger>
+                <TabsTrigger value="schedule">Schedule Viewing</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Description</h2>
+                  <p className="text-gray-600 whitespace-pre-line">{property.description}</p>
+                </div>
 
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Features</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="flex items-center">
-                  <Bed className="h-5 w-5 text-blue-500 mr-2" />
-                  <span className="text-gray-600">{displayFeature(property.bedrooms, "Bedrooms")}</span>
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Features</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="flex items-center">
+                      <Bed className="h-5 w-5 text-blue-500 mr-2" />
+                      <span className="text-gray-600">{displayFeature(property.bedrooms, "Bedrooms")}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <ShowerHead className="h-5 w-5 text-blue-500 mr-2" />
+                      <span className="text-gray-600">{displayFeature(property.bathrooms, "Bathrooms")}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <SquareIcon className="h-5 w-5 text-blue-500 mr-2" />
+                      <span className="text-gray-600">{displayFeature(property.area, "sqft Area")}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Home className="h-5 w-5 text-blue-500 mr-2" />
+                      <span className="text-gray-600">
+                        {property.type.charAt(0).toUpperCase() + property.type.slice(1)}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-5 w-5 text-blue-500 mr-2" />
+                      <span className="text-gray-600">
+                        {new Date(property.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <ShowerHead className="h-5 w-5 text-blue-500 mr-2" />
-                  <span className="text-gray-600">{displayFeature(property.bathrooms, "Bathrooms")}</span>
-                </div>
-                <div className="flex items-center">
-                  <SquareIcon className="h-5 w-5 text-blue-500 mr-2" />
-                  <span className="text-gray-600">{displayFeature(property.area, "sqft Area")}</span>
-                </div>
-                <div className="flex items-center">
-                  <Home className="h-5 w-5 text-blue-500 mr-2" />
-                  <span className="text-gray-600">
-                    {property.type.charAt(0).toUpperCase() + property.type.slice(1)}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-blue-500 mr-2" />
-                  <span className="text-gray-600">
-                    {new Date(property.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
+              </TabsContent>
+              
+              <TabsContent value="schedule">
+                <Card>
+                  <CardContent className="pt-6">
+                    <AppointmentScheduler propertyId={property.id} propertyTitle={property.title} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="lg:col-span-1">
@@ -189,8 +225,8 @@ const PropertyDetails = () => {
                 </div>
                 <Separator className="my-4" />
                 <div className="space-y-4">
-                  <Button className="w-full">Contact Agent</Button>
-                  <Button variant="outline" className="w-full">Schedule Viewing</Button>
+                  <Button className="w-full" onClick={handleScheduleClick}>Schedule Viewing</Button>
+                  <Button variant="outline" className="w-full">Contact Agent</Button>
                 </div>
               </CardContent>
             </Card>
