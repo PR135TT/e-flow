@@ -2,7 +2,7 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "@/App";
-import { UserCheck, UserX, ShieldCheck } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   NavigationMenu,
@@ -65,6 +65,14 @@ export const AuthStatus = () => {
                       </span>
                     )}
                   </div>
+                  
+                  <Link 
+                    to="/profile"
+                    className="block w-full p-2 text-sm rounded-md text-left hover:bg-gray-100 mb-1 flex items-center"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    View Profile
+                  </Link>
                   
                   {isAdmin && (
                     <Link 
