@@ -15,10 +15,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LazyImage } from "@/components/ui/lazy-image";
 import {
   Calendar,
   Clock,
-  Home,
   MapPin,
   AlertCircle,
   CheckCircle2,
@@ -113,10 +114,34 @@ export function MyAppointments() {
     }
   };
 
+  // Loading skeleton UI
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((item) => (
+          <Card key={item} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div className="w-2/3">
+                  <Skeleton className="h-6 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-6">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-10 w-full" />
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     );
   }

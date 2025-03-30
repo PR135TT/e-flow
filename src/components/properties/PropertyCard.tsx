@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Property } from "@/lib/database/types";
 import { formatCurrency } from "@/lib/utils";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 interface PropertyCardProps {
   property: Property;
@@ -19,7 +20,7 @@ export const PropertyCard = ({ property, isPending = false, onViewDetails }: Pro
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="h-48 bg-gray-200 overflow-hidden relative">
+      <div className="h-48 overflow-hidden relative">
         {isPending && (
           <div className="absolute top-2 right-2 z-10">
             <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 flex items-center gap-1">
@@ -28,10 +29,11 @@ export const PropertyCard = ({ property, isPending = false, onViewDetails }: Pro
           </div>
         )}
         {property.images && property.images.length > 0 ? (
-          <img 
+          <LazyImage 
             src={property.images[0]} 
             alt={property.title} 
-            className="w-full h-full object-cover"
+            className="w-full h-full"
+            fallbackIcon={<Home className="h-12 w-12 text-gray-400" />}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
