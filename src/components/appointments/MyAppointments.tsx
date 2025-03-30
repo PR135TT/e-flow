@@ -105,7 +105,7 @@ export function MyAppointments() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge variant="success" className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</Badge>;
+        return <Badge variant="default" className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</Badge>;
       case 'cancelled':
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Cancelled</Badge>;
       default:

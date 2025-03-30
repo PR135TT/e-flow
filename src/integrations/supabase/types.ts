@@ -259,6 +259,59 @@ export type Database = {
           },
         ]
       }
+      property_appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          property_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          property_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          property_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_appointments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_submissions: {
         Row: {
           created_at: string
