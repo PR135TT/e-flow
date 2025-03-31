@@ -56,7 +56,7 @@ describe('useIntersectionObserver', () => {
     originalIntersectionObserver = window.IntersectionObserver;
     window.IntersectionObserver = vi.fn().mockImplementation((callback) => {
       return new MockIntersectionObserver(callback);
-    });
+    }) as any;
   });
   
   afterEach(() => {
@@ -74,7 +74,7 @@ describe('useIntersectionObserver', () => {
     const { result, rerender } = renderHook(() => useIntersectionObserver());
     
     // Get the mock observer
-    const mockObserverInstance = (window.IntersectionObserver as unknown as vi.Mock).mock.results[0].value as MockIntersectionObserver;
+    const mockObserverInstance = (window.IntersectionObserver as any).mock.results[0].value as MockIntersectionObserver;
     
     // Create a real DOM element
     const element = document.createElement('div');
@@ -94,4 +94,3 @@ describe('useIntersectionObserver', () => {
     expect(result.current[1]).toBe(true);
   });
 });
-
