@@ -5,7 +5,7 @@ import { LazyContent } from '../lazy-content';
 
 // Mock the intersection observer hook
 vi.mock('@/hooks/use-intersection-observer', () => ({
-  useIntersectionObserver: () => [null, true]
+  useIntersectionObserver: () => [{ current: null }, true]
 }));
 
 describe('LazyContent', () => {
@@ -21,7 +21,7 @@ describe('LazyContent', () => {
 
   it('renders placeholder when not in viewport', () => {
     // Override mock for this test to simulate not in viewport
-    vi.mocked(useIntersectionObserver).mockReturnValueOnce([null, false]);
+    vi.mocked(useIntersectionObserver).mockReturnValueOnce([{ current: null }, false]);
     
     render(
       <LazyContent>
@@ -36,7 +36,7 @@ describe('LazyContent', () => {
 
   it('renders custom placeholder when provided', () => {
     // Override mock for this test to simulate not in viewport
-    vi.mocked(useIntersectionObserver).mockReturnValueOnce([null, false]);
+    vi.mocked(useIntersectionObserver).mockReturnValueOnce([{ current: null }, false]);
     
     render(
       <LazyContent placeholder={<div>Custom Placeholder</div>}>

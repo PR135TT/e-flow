@@ -19,8 +19,8 @@ describe('PropertyCard', () => {
     bedrooms: 3,
     bathrooms: 2,
     area: 1500,
-    type: 'Apartment',
-    status: 'Available',
+    type: 'apartment', // Fix: changed from 'Apartment' to lowercase 'apartment'
+    status: 'sale', // Fix: changed from 'Available' to 'sale'
     images: ['image1.jpg'],
     ownerId: 'owner-1',
     agentId: null,

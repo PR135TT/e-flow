@@ -23,7 +23,7 @@ describe('AuthStatus', () => {
   it('renders sign in link when user is not logged in', () => {
     render(
       <MemoryRouter>
-        <AuthContext.Provider value={{ user: null }}>
+        <AuthContext.Provider value={{ user: null, session: null }}>
           <AuthStatus />
         </AuthContext.Provider>
       </MemoryRouter>
@@ -35,7 +35,7 @@ describe('AuthStatus', () => {
   it('renders user info when user is logged in', () => {
     render(
       <MemoryRouter>
-        <AuthContext.Provider value={{ user: { id: '1', email: 'test@example.com' } }}>
+        <AuthContext.Provider value={{ user: { id: '1', email: 'test@example.com' }, session: {} }}>
           <AuthStatus />
         </AuthContext.Provider>
       </MemoryRouter>
@@ -50,7 +50,7 @@ describe('AuthStatus', () => {
     
     render(
       <MemoryRouter>
-        <AuthContext.Provider value={{ user: { id: '1', email: 'admin@example.com' } }}>
+        <AuthContext.Provider value={{ user: { id: '1', email: 'admin@example.com' }, session: {} }}>
           <AuthStatus />
         </AuthContext.Provider>
       </MemoryRouter>
