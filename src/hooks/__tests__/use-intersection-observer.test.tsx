@@ -1,81 +1,75 @@
 
-import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useIntersectionObserver } from '../use-intersection-observer';
 
-// Mock IntersectionObserver
+// Create a mock IntersectionObserver
 class MockIntersectionObserver {
-  callback: IntersectionObserverCallback;
-  elements: Set<Element>;
-  root: Element | Document | null;
-  rootMargin: string;
-  thresholds: ReadonlyArray<number>;
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
   
-  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+  callback: IntersectionObserverCallback;
+  elements: Element[] = [];
+  
+  constructor(callback: IntersectionObserverCallback) {
     this.callback = callback;
-    this.elements = new Set();
-    this.root = options?.root || null;
-    this.rootMargin = options?.rootMargin || '0px';
-    this.thresholds = options?.threshold ? 
-      Array.isArray(options.threshold) ? options.threshold : [options.threshold] 
-      : [0];
   }
-
-  observe(element: Element) {
-    this.elements.add(element);
-  }
-
-  unobserve(element: Element) {
-    this.elements.delete(element);
-  }
-
+  
   disconnect() {
-    this.elements.clear();
+    this.elements = [];
   }
-
+  
+  observe(element: Element) {
+    this.elements.push(element);
+  }
+  
+  unobserve(element: Element) {
+    this.elements = this.elements.filter(el => el !== element);
+  }
+  
   takeRecords(): IntersectionObserverEntry[] {
     return [];
   }
-
-  // Helper to simulate intersection
-  triggerIntersection(isIntersecting: boolean) {
-    const entries = Array.from(this.elements).map(element => ({
+  
+  // Helper method to simulate an intersection
+  simulateIntersection(isIntersecting: boolean) {
+    const entries = this.elements.map(element => ({
       isIntersecting,
       target: element,
       boundingClientRect: {} as DOMRectReadOnly,
       intersectionRatio: isIntersecting ? 1 : 0,
       intersectionRect: {} as DOMRectReadOnly,
-      rootBounds: null,
+      rootBounds: {} as DOMRectReadOnly,
       time: Date.now()
     }));
     
-    this.callback(entries, this);
+    this.callback(entries, this as unknown as IntersectionObserver);
   }
 }
 
 describe('useIntersectionObserver', () => {
   let originalIntersectionObserver: typeof IntersectionObserver;
   
-  beforeAll(() => {
+  beforeEach(() => {
     originalIntersectionObserver = window.IntersectionObserver;
-    window.IntersectionObserver = vi.fn().mockImplementation((callback, options) => {
-      return new MockIntersectionObserver(callback, options) as unknown as IntersectionObserver;
+    window.IntersectionObserver = vi.fn().mockImplementation((callback) => {
+      return new MockIntersectionObserver(callback);
     });
   });
   
   afterEach(() => {
-    vi.clearAllMocks();
+    window.IntersectionObserver = originalIntersectionObserver;
   });
-
-  it('should return ref and initial intersection state (false)', () => {
+  
+  it('should return a ref and isIntersecting false initially', () => {
     const { result } = renderHook(() => useIntersectionObserver());
-    const [ref, isIntersecting] = result.current;
     
-    expect(ref.current).toBe(null);
-    expect(isIntersecting).toBe(false);
+    expect(result.current[0].current).toBe(null);
+    expect(result.current[1]).toBe(false);
   });
-
-  it('should update isIntersecting when intersection changes', () => {
+  
+  it('should update isIntersecting when element is observed and intersects', () => {
     const { result, rerender } = renderHook(() => useIntersectionObserver());
     
     // Get the mock observer
@@ -89,18 +83,12 @@ describe('useIntersectionObserver', () => {
       configurable: true
     });
     
-    // Trigger the useEffect that observes the element
+    // Call the hook's effect
     rerender();
     
-    // Trigger intersection
-    mockObserverInstance.triggerIntersection(true);
+    // Simulate intersection
+    mockObserverInstance.simulateIntersection(true);
     
-    // Since we can't update the result directly in the test,
-    // we need to check if the callback was called with the right parameters
-    expect(mockObserverInstance.elements.has(element)).toBe(true);
-  });
-
-  afterAll(() => {
-    window.IntersectionObserver = originalIntersectionObserver;
+    expect(result.current[1]).toBe(true);
   });
 });

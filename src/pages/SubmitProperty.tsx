@@ -197,15 +197,8 @@ const SubmitProperty = () => {
       
       setSubmissionResult(propertySubmission);
       
-      const tokensAwarded = propertySubmission.tokensAwarded;
-      const newTokens = await db.incrementUserTokens(userId, tokensAwarded);
-      
-      if (newTokens === null) {
-        console.error('Failed to update tokens');
-      }
-      
       toast.success('Property submitted successfully', {
-        description: `You've earned ${tokensAwarded} tokens!`,
+        description: 'Your submission will be reviewed by an admin. You will be awarded tokens when your property is approved.',
         duration: 5000,
       });
       

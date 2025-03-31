@@ -1,3 +1,4 @@
+
 import { supabase } from '../supabase';
 import { Property, PropertySubmission } from './types';
 
@@ -218,9 +219,14 @@ export const db = {
     
     if (submissionError) {
       console.error('Error updating submission status:', submissionError);
+      return { success: false, error: submissionError.message };
     }
     
+    // Award tokens to the user when the property is approved
     if (submissionData) {
+      const tokensAwarded = submissionData.tokens_awarded || 0;
+      
+      // Update user's tokens
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('tokens')
@@ -229,7 +235,7 @@ export const db = {
         
       if (!userError && userData) {
         const currentTokens = userData.tokens || 0;
-        const newTokens = currentTokens + submissionData.tokens_awarded;
+        const newTokens = currentTokens + tokensAwarded;
         
         const { error: updateError } = await supabase
           .from('users')
@@ -238,14 +244,34 @@ export const db = {
           
         if (updateError) {
           console.error('Error updating user tokens:', updateError);
+          return { 
+            success: true, 
+            property: propertyData,
+            tokensAwarded,
+            error: 'Property approved but failed to award tokens'
+          };
         }
+      } else {
+        console.error('Error fetching user data:', userError);
+        return { 
+          success: true, 
+          property: propertyData,
+          tokensAwarded,
+          error: 'Property approved but failed to award tokens'
+        };
       }
+      
+      return { 
+        success: true, 
+        property: propertyData,
+        tokensAwarded
+      };
     }
     
     return { 
       success: true, 
       property: propertyData,
-      tokensAwarded: submissionData?.tokens_awarded || 0
+      tokensAwarded: 0
     };
   },
   

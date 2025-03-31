@@ -1,67 +1,71 @@
 
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AuthStatus } from '../AuthStatus';
+import { describe, it, expect, vi } from 'vitest';
 import { AuthContext } from '@/App';
-import { MemoryRouter } from 'react-router-dom';
+import { AuthStatus } from '../AuthStatus';
 
 // Mock the useAdmin hook
 vi.mock('@/hooks/useAdmin', () => ({
-  useAdmin: () => ({ isAdmin: false })
+  useAdmin: vi.fn(() => ({ isAdmin: false, isLoading: false }))
 }));
 
-// Mock supabase
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      signOut: vi.fn().mockResolvedValue({ error: null })
-    }
-  }
+// Mock the react-router-dom hooks
+vi.mock('react-router-dom', () => ({
+  Link: ({ to, children }: { to: string, children: React.ReactNode }) => (
+    <a href={to} data-testid="mock-link">{children}</a>
+  ),
 }));
 
-describe('AuthStatus', () => {
-  it('renders sign in link when user is not logged in', () => {
+describe('AuthStatus Component', () => {
+  it('renders sign in button when no user is logged in', () => {
     render(
-      <MemoryRouter>
-        <AuthContext.Provider value={{ user: null, session: null }}>
-          <AuthStatus />
-        </AuthContext.Provider>
-      </MemoryRouter>
+      <AuthContext.Provider value={{ 
+        user: null, 
+        session: null, 
+        setUser: vi.fn(), 
+        setSession: vi.fn() 
+      }}>
+        <AuthStatus />
+      </AuthContext.Provider>
     );
     
-    expect(screen.getByText('Sign In')).toBeInTheDocument();
+    expect(screen.getByText(/sign in/i)).toBeInTheDocument();
   });
 
-  it('renders user info when user is logged in', () => {
+  it('renders user email when logged in', () => {
+    const mockUser = { id: '123', email: 'test@example.com' };
+    
     render(
-      <MemoryRouter>
-        <AuthContext.Provider value={{ user: { id: '1', email: 'test@example.com' }, session: {} }}>
-          <AuthStatus />
-        </AuthContext.Provider>
-      </MemoryRouter>
+      <AuthContext.Provider value={{ 
+        user: mockUser, 
+        session: { user: mockUser, access_token: '123', refresh_token: '456' }, 
+        setUser: vi.fn(), 
+        setSession: vi.fn() 
+      }}>
+        <AuthStatus />
+      </AuthContext.Provider>
     );
     
-    expect(screen.getByText('Signed In')).toBeInTheDocument();
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
   });
 
-  it('renders admin badge when user is admin', () => {
-    // Override the mock for this specific test
-    vi.mocked(useAdmin).mockReturnValueOnce({ isAdmin: true });
+  it('shows admin badge for admin users', () => {
+    const mockUser = { id: '123', email: 'admin@example.com' };
+    
+    // Override the mock to return isAdmin: true
+    require('@/hooks/useAdmin').useAdmin.mockReturnValue({ isAdmin: true, isLoading: false });
     
     render(
-      <MemoryRouter>
-        <AuthContext.Provider value={{ user: { id: '1', email: 'admin@example.com' }, session: {} }}>
-          <AuthStatus />
-        </AuthContext.Provider>
-      </MemoryRouter>
+      <AuthContext.Provider value={{ 
+        user: mockUser, 
+        session: { user: mockUser, access_token: '123', refresh_token: '456' }, 
+        setUser: vi.fn(), 
+        setSession: vi.fn() 
+      }}>
+        <AuthStatus />
+      </AuthContext.Provider>
     );
     
-    // Since the NavigationMenuTrigger might not fully expand in tests,
-    // check for the Admin icon or indicator
-    const adminIcon = document.querySelector('.text-yellow-400');
-    expect(adminIcon).toBeInTheDocument();
+    expect(screen.getByText(/admin/i)).toBeInTheDocument();
   });
 });
-
-// Helper for the vi.mocked usage
-import { useAdmin } from '@/hooks/useAdmin';

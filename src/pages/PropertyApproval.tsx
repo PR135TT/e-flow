@@ -59,11 +59,17 @@ const PropertyApproval = () => {
       const result = await db.approveProperty(propertyId);
       
       if (result.success) {
+        // Show a success message that includes the tokens awarded
         toast.success(`Property approved successfully! ${result.tokensAwarded} tokens awarded to user.`);
         // Remove the approved property from the list
         setPendingProperties(prev => prev.filter(p => p.id !== propertyId));
       } else {
-        toast.error("Failed to approve property");
+        // Display any error messages
+        if (result.error) {
+          toast.error(`Failed to approve property: ${result.error}`);
+        } else {
+          toast.error("Failed to approve property");
+        }
       }
     } catch (error) {
       console.error("Error approving property:", error);

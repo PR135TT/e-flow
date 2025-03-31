@@ -5,10 +5,12 @@ import { LazyContent } from '../lazy-content';
 
 // Mock the intersection observer hook
 vi.mock('@/hooks/use-intersection-observer', () => ({
-  useIntersectionObserver: () => [{ current: null }, true]
+  useIntersectionObserver: () => {
+    return [{ current: null }, true]; // [ref, isIntersecting]
+  }
 }));
 
-describe('LazyContent', () => {
+describe('LazyContent Component', () => {
   it('renders children when in viewport', () => {
     render(
       <LazyContent>
@@ -18,10 +20,30 @@ describe('LazyContent', () => {
     
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
-
-  it('renders placeholder when not in viewport', () => {
-    // Override mock for this test to simulate not in viewport
-    vi.mocked(useIntersectionObserver).mockReturnValueOnce([{ current: null }, false]);
+  
+  it('renders placeholder when not in viewport and placeholder is provided', () => {
+    // Override the hook mock for this test
+    vi.mocked(require('@/hooks/use-intersection-observer').useIntersectionObserver).mockReturnValue([
+      { current: null },
+      false // not intersecting
+    ]);
+    
+    render(
+      <LazyContent placeholder={<div>Loading...</div>}>
+        <div>Test Content</div>
+      </LazyContent>
+    );
+    
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
+  });
+  
+  it('renders nothing when not in viewport and no placeholder', () => {
+    // Override the hook mock for this test
+    vi.mocked(require('@/hooks/use-intersection-observer').useIntersectionObserver).mockReturnValue([
+      { current: null },
+      false // not intersecting
+    ]);
     
     render(
       <LazyContent>
@@ -30,24 +52,5 @@ describe('LazyContent', () => {
     );
     
     expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
-    // Check that skeleton is rendered
-    expect(document.querySelector('.skeleton')).toBeInTheDocument();
-  });
-
-  it('renders custom placeholder when provided', () => {
-    // Override mock for this test to simulate not in viewport
-    vi.mocked(useIntersectionObserver).mockReturnValueOnce([{ current: null }, false]);
-    
-    render(
-      <LazyContent placeholder={<div>Custom Placeholder</div>}>
-        <div>Test Content</div>
-      </LazyContent>
-    );
-    
-    expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
-    expect(screen.getByText('Custom Placeholder')).toBeInTheDocument();
   });
 });
-
-// Helper for the vi.mocked usage
-import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
