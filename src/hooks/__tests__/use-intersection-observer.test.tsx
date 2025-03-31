@@ -49,7 +49,7 @@ class MockIntersectionObserver {
       time: Date.now()
     }));
     
-    this.callback(entries, this as unknown as IntersectionObserver);
+    this.callback(entries, this);
   }
 }
 
@@ -79,13 +79,13 @@ describe('useIntersectionObserver', () => {
     const { result, rerender } = renderHook(() => useIntersectionObserver());
     
     // Get the mock observer
-    const mockObserverInstance = (window.IntersectionObserver as unknown as jest.Mock).mock.results[0].value as MockIntersectionObserver;
+    const mockObserverInstance = (window.IntersectionObserver as unknown as vi.Mock).mock.results[0].value as MockIntersectionObserver;
     
     // Create and set a real DOM element (we can't directly set ref.current as it's readonly)
     const element = document.createElement('div');
     // Use the ref callback approach to set the element
     Object.defineProperty(result.current[0], 'current', {
-      value: element,
+      get: () => element,
       configurable: true
     });
     
