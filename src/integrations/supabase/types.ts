@@ -75,6 +75,44 @@ export type Database = {
           },
         ]
       }
+      facility_services: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          facility_id: string | null
+          id: string
+          service_name: string
+          updated_at: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          facility_id?: string | null
+          id?: string
+          service_name: string
+          updated_at?: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          facility_id?: string | null
+          id?: string
+          service_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_services_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "medical_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "Jobs for Merc": {
         Row: {
           created_at: string
@@ -109,6 +147,110 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "Users for Merc"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_facilities: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          operating_hours: Json | null
+          phone: string | null
+          rating: number | null
+          state: string
+          type: string
+          updated_at: string
+          website: string | null
+          zip: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          operating_hours?: Json | null
+          phone?: string | null
+          rating?: number | null
+          state: string
+          type: string
+          updated_at?: string
+          website?: string | null
+          zip: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          operating_hours?: Json | null
+          phone?: string | null
+          rating?: number | null
+          state?: string
+          type?: string
+          updated_at?: string
+          website?: string | null
+          zip?: string
+        }
+        Relationships: []
+      }
+      medical_resources: {
+        Row: {
+          availability: boolean | null
+          created_at: string
+          description: string | null
+          facility_id: string | null
+          id: string
+          quantity: number | null
+          resource_name: string
+          resource_type: string
+          updated_at: string
+        }
+        Insert: {
+          availability?: boolean | null
+          created_at?: string
+          description?: string | null
+          facility_id?: string | null
+          id?: string
+          quantity?: number | null
+          resource_name: string
+          resource_type: string
+          updated_at?: string
+        }
+        Update: {
+          availability?: boolean | null
+          created_at?: string
+          description?: string | null
+          facility_id?: string | null
+          id?: string
+          quantity?: number | null
+          resource_name?: string
+          resource_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_resources_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "medical_facilities"
             referencedColumns: ["id"]
           },
         ]
