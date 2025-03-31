@@ -21,9 +21,7 @@ describe('AuthStatus Component', () => {
     render(
       <AuthContext.Provider value={{ 
         user: null, 
-        session: null, 
-        setUser: vi.fn(), 
-        setSession: vi.fn() 
+        session: null
       }}>
         <AuthStatus />
       </AuthContext.Provider>
@@ -38,9 +36,7 @@ describe('AuthStatus Component', () => {
     render(
       <AuthContext.Provider value={{ 
         user: mockUser, 
-        session: { user: mockUser, access_token: '123', refresh_token: '456' }, 
-        setUser: vi.fn(), 
-        setSession: vi.fn() 
+        session: { user: mockUser, access_token: '123', refresh_token: '456' }
       }}>
         <AuthStatus />
       </AuthContext.Provider>
@@ -58,9 +54,7 @@ describe('AuthStatus Component', () => {
     render(
       <AuthContext.Provider value={{ 
         user: mockUser, 
-        session: { user: mockUser, access_token: '123', refresh_token: '456' }, 
-        setUser: vi.fn(), 
-        setSession: vi.fn() 
+        session: { user: mockUser, access_token: '123', refresh_token: '456' }
       }}>
         <AuthStatus />
       </AuthContext.Provider>

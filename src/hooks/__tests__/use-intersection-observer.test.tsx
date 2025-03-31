@@ -75,9 +75,10 @@ describe('useIntersectionObserver', () => {
     // Get the mock observer
     const mockObserverInstance = (window.IntersectionObserver as unknown as vi.Mock).mock.results[0].value as MockIntersectionObserver;
     
-    // Create and set a real DOM element (we can't directly set ref.current as it's readonly)
+    // Create a real DOM element
     const element = document.createElement('div');
-    // Use the ref callback approach to set the element
+    
+    // Use Object.defineProperty to set the readonly ref.current
     Object.defineProperty(result.current[0], 'current', {
       get: () => element,
       configurable: true
