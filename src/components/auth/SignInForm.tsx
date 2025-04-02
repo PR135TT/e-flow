@@ -7,7 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 const signInFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -31,6 +32,7 @@ interface SignInFormProps {
 
 export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
@@ -64,6 +66,28 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
       setIsLoading(false);
     }
   }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/auth/callback'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+      
+      // No need for toast here as the page will redirect to Google
+    } catch (error: any) {
+      console.error("Google sign in error:", error);
+      toast.error(error.message || "Failed to sign in with Google. Please try again.");
+      setIsGoogleLoading(false);
+    }
+  };
 
   return (
     <Form {...form}>
@@ -127,6 +151,32 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign In"}
+        </Button>
+        
+        <div className="flex items-center gap-4 my-4">
+          <Separator className="flex-grow" />
+          <span className="text-xs text-gray-500">OR</span>
+          <Separator className="flex-grow" />
+        </div>
+        
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogleSignIn}
+          disabled={isGoogleLoading}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {isGoogleLoading ? (
+            "Connecting..."
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M1 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9-9-4-9-9z"></path>
+                <path d="M12 3v9l4.5 4.5"></path>
+              </svg>
+              Sign in with Google
+            </>
+          )}
         </Button>
         
         <p className="text-center text-sm mt-4">

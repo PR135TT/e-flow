@@ -1,3 +1,4 @@
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
@@ -26,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Eye, EyeOff } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface SignUpFormProps {
   returnTo?: string;
@@ -34,6 +36,7 @@ interface SignUpFormProps {
 export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -110,8 +113,62 @@ export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/auth/callback',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+      
+      // No need for toast here as the page will redirect to Google
+    } catch (error: any) {
+      console.error("Google sign up error:", error);
+      toast.error(error.message || "Failed to sign up with Google. Please try again.");
+      setIsGoogleLoading(false);
+    }
+  };
+
   return (
     <Form {...form}>
+      <div className="mb-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogleSignUp}
+          disabled={isGoogleLoading}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {isGoogleLoading ? (
+            "Connecting..."
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                <path d="M1 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9-9-4-9-9z"></path>
+                <path d="M12 3v9l4.5 4.5"></path>
+              </svg>
+              Sign up with Google
+            </>
+          )}
+        </Button>
+        
+        <div className="flex items-center gap-4 my-6">
+          <Separator className="flex-grow" />
+          <span className="text-xs text-gray-500">OR SIGN UP WITH EMAIL</span>
+          <Separator className="flex-grow" />
+        </div>
+      </div>
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}

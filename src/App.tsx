@@ -25,6 +25,7 @@ import AdminManagement from "./pages/AdminManagement";
 import HelpCenter from "./pages/HelpCenter";
 import Profile from "./pages/Profile";
 import Appointments from "./pages/Appointments";
+import AuthCallback from "./pages/AuthCallback";
 
 export const AuthContext = createContext<{
   user: any | null;
@@ -82,6 +83,7 @@ const App = () => {
               <Route path="/help" element={<HelpCenter />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/appointments" element={<Appointments />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
