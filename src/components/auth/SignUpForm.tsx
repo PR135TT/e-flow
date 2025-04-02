@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { signUpFormSchema, type SignUpFormValues } from "./SignUpFormSchema";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,8 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
-import { signUpFormSchema, type SignUpFormValues } from "./SignUpFormSchema";
+import { Eye, EyeOff } from "lucide-react";
 
 interface SignUpFormProps {
   returnTo?: string;
@@ -37,7 +37,6 @@ export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Initialize form
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
@@ -56,7 +55,7 @@ export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
   const onSubmit = async (values: SignUpFormValues) => {
     setIsLoading(true);
     try {
-      console.log("Attempting signup with email:", values.email);
+      console.log("Attempting first-time signup with email:", values.email);
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
@@ -73,21 +72,22 @@ export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
       });
       
       if (authError) {
-        console.error("Detailed signup error:", {
+        console.error("Detailed first-time signup error:", {
           message: authError.message,
           status: authError.status,
           code: authError.code
         });
         
-        // More specific error handling
-        switch (authError.message) {
-          case "Email rate limit exceeded":
-            toast.error("Too many signup attempts. Please wait before trying again.", {
-              description: "Try again in 30 minutes or contact support."
+        switch (true) {
+          case authError.message.includes("rate limit"):
+            toast.error("Too many signup attempts", {
+              description: "Please wait 30 minutes before trying again or contact support."
             });
             break;
-          case "Invalid email address":
-            toast.error("The email address is invalid. Please check and try again.");
+          case authError.message.includes("email"):
+            toast.error("Email signup issue", {
+              description: "There might be a problem with your email. Please verify and try again."
+            });
             break;
           default:
             toast.error("Signup failed", {
@@ -98,14 +98,13 @@ export const SignUpForm = ({ returnTo = '/' }: SignUpFormProps) => {
         throw authError;
       }
       
-      // Success handling
-      toast.success("Signup successful!", {
-        description: "Please check your email to verify your account."
+      toast.success("Signup initiated!", {
+        description: "Check your email to complete registration."
       });
       
       navigate(returnTo);
     } catch (error) {
-      console.error("Signup process error:", error);
+      console.error("First-time signup process error:", error);
     } finally {
       setIsLoading(false);
     }
