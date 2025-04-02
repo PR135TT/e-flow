@@ -593,6 +593,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_user_profile: {
+        Args: {
+          user_id: string
+          user_email: string
+          user_name: string
+          user_type: string
+        }
+        Returns: undefined
+      }
       is_admin: {
         Args: {
           user_id: string
