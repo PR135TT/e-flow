@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -47,11 +48,10 @@ const AuthCallback = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-xl mb-2">Finalizing authentication...</h1>
-        <p className="text-gray-500">Please wait while we complete your sign-in process.</p>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+      <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+      <h1 className="text-xl mb-2">Finalizing authentication...</h1>
+      <p className="text-gray-500">Please wait while we complete your sign-in process.</p>
     </div>
   );
 };

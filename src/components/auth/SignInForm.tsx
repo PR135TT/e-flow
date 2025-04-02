@@ -7,7 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -73,7 +73,7 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/auth/callback'
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
@@ -95,6 +95,33 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
         onSubmit={form.handleSubmit(onSubmit)} 
         className="space-y-6 animate-fade-in"
       >
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogleSignIn}
+          disabled={isGoogleLoading}
+          className="w-full flex items-center justify-center gap-2 mb-4"
+        >
+          {isGoogleLoading ? (
+            "Connecting..."
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                  <path d="M21.35,11.1H12v3.2h5.59c-0.25,1.61-1.63,4.7-5.59,4.7c-3.37,0-6.12-2.79-6.12-6.23S8.63,6.54,12,6.54 c1.95,0,3.25,0.83,4,1.54l2.53-2.45C16.66,3.94,14.53,3,12,3C7.03,3,3,7.03,3,12s4.03,9,9,9c5.2,0,8.65-3.65,8.65-8.8 C20.65,11.58,21.01,11.1,21.35,11.1z" fill="#4285F4"></path>
+                </g>
+              </svg>
+              Sign in with Google
+            </>
+          )}
+        </Button>
+        
+        <div className="flex items-center gap-4">
+          <Separator className="flex-grow" />
+          <span className="text-xs text-gray-500">OR</span>
+          <Separator className="flex-grow" />
+        </div>
+
         <FormField
           control={form.control}
           name="email"
@@ -151,32 +178,6 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign In"}
-        </Button>
-        
-        <div className="flex items-center gap-4 my-4">
-          <Separator className="flex-grow" />
-          <span className="text-xs text-gray-500">OR</span>
-          <Separator className="flex-grow" />
-        </div>
-        
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleGoogleSignIn}
-          disabled={isGoogleLoading}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          {isGoogleLoading ? (
-            "Connecting..."
-          ) : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
-                <path d="M1 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9-9-4-9-9z"></path>
-                <path d="M12 3v9l4.5 4.5"></path>
-              </svg>
-              Sign in with Google
-            </>
-          )}
         </Button>
         
         <p className="text-center text-sm mt-4">
