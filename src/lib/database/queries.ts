@@ -48,7 +48,7 @@ export const getPropertiesByQuery = async ({
     return [];
   }
   
-  // Transform the properties to use camelCase keys as expected by other components
+  // Transform the properties to match the expected PropertyType format
   return data.map(property => ({
     id: property.id,
     title: property.title,
@@ -61,11 +61,11 @@ export const getPropertiesByQuery = async ({
     type: property.type,
     status: property.status,
     images: property.images || [],
-    ownerId: property.owner_id,
-    agentId: property.agent_id,
-    companyId: property.company_id,
-    isApproved: property.is_approved,
-    createdAt: property.created_at,
-    updatedAt: property.updated_at
-  }));
+    owner_id: property.owner_id,
+    agent_id: property.agent_id,
+    company_id: property.company_id,
+    is_approved: property.is_approved,
+    created_at: property.created_at,
+    updated_at: property.updated_at
+  } as unknown as PropertyType));
 };
