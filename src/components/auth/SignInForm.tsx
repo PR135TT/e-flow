@@ -31,6 +31,10 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
       
       <p className="text-center text-xs text-gray-500 mt-4">
         By signing in, you agree to our{" "}
+        <Link to="/terms-of-service" className="text-blue-600 hover:underline">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
         <Link to="/privacy-policy" className="text-blue-600 hover:underline">
           Privacy Policy
         </Link>

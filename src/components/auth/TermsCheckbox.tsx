@@ -23,7 +23,7 @@ export const TermsCheckbox = ({ form }: TermsCheckboxProps) => {
           </FormControl>
           <div className="space-y-1 leading-none">
             <FormLabel>
-              I accept the <Link to="#" className="text-blue-600 hover:underline">terms and conditions</Link>
+              I accept the <Link to="/terms-of-service" className="text-blue-600 hover:underline">terms and conditions</Link>
             </FormLabel>
             <FormMessage />
           </div>
