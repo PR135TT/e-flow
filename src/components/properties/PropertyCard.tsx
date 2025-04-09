@@ -33,6 +33,11 @@ export const PropertyCard = ({
     }
   };
 
+  const handleViewDetails = () => {
+    console.log("View details clicked for property ID:", property.id);
+    onViewDetails(property.id);
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="h-48 overflow-hidden relative">
@@ -82,7 +87,7 @@ export const PropertyCard = ({
       <CardFooter>
         <Button 
           className="w-full"
-          onClick={() => onViewDetails(property.id)}
+          onClick={handleViewDetails}
         >
           View Details
         </Button>

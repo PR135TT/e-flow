@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -5,7 +6,6 @@ import { Property } from "@/lib/database/types";
 import { db } from "@/lib/database";
 import { Header } from "@/components/Header";
 import { PageFooter } from "@/components/PageFooter";
-import { PropertyCard } from "@/components/properties/PropertyCard";
 import { SearchBar } from "@/components/properties/SearchBar";
 import { PendingPropertiesSection } from "@/components/properties/PendingPropertiesSection";
 import { AvailablePropertiesSection } from "@/components/properties/AvailablePropertiesSection";
@@ -26,6 +26,7 @@ const Properties = () => {
     const fetchProperties = async () => {
       try {
         const propertiesData = await db.getProperties();
+        console.log("Fetched properties:", propertiesData);
         setProperties(propertiesData);
         setFilteredProperties(propertiesData);
       } catch (error) {
@@ -112,6 +113,7 @@ const Properties = () => {
   };
 
   const handleViewDetails = (propertyId: string) => {
+    console.log("Navigating to property details for ID:", propertyId);
     navigate(`/property/${propertyId}`);
   };
 
@@ -152,6 +154,7 @@ const Properties = () => {
             handleViewDetails={handleViewDetails}
             handleUploadProperty={handleUploadProperty}
             clearSearch={clearSearch}
+            onPropertyUpdated={setPendingProperties.length > 0 ? () => {} : undefined}
           />
         </div>
       </section>

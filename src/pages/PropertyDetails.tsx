@@ -32,14 +32,17 @@ const PropertyDetails = () => {
 
       try {
         setIsLoading(true);
+        console.log("Fetching property details for ID:", id);
         const propertyData = await db.getPropertyById(id);
         
         if (!propertyData) {
+          console.error("Property data not found for ID:", id);
           toast.error("Property not found");
           navigate("/properties");
           return;
         }
         
+        console.log("Property data loaded:", propertyData);
         setProperty(propertyData);
       } catch (error) {
         console.error("Error fetching property details:", error);

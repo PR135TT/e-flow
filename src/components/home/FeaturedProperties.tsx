@@ -33,16 +33,13 @@ export const FeaturedProperties = () => {
     fetchFeaturedProperties();
   }, []);
 
-  const handleButtonClick = (action: string) => {
-    if (action === "Upload Property") {
-      navigate('/submit-property');
-    } else if (action.includes("View Property") || action.includes("View Details")) {
-      // Extract property ID from the action string
-      const match = action.match(/Property (\d+)/);
-      if (match && match[1]) {
-        navigate(`/property/${match[1]}`);
-      }
-    }
+  const handleViewProperty = (propertyId: string) => {
+    console.log("Navigating to property details for ID:", propertyId);
+    navigate(`/property/${propertyId}`);
+  };
+
+  const handleUploadProperty = () => {
+    navigate('/submit-property');
   };
 
   const formatPrice = (price: number) => {
@@ -55,7 +52,7 @@ export const FeaturedProperties = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">Featured Properties</h2>
           <Button 
-            onClick={() => handleButtonClick("Upload Property")}
+            onClick={handleUploadProperty}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
@@ -74,7 +71,7 @@ export const FeaturedProperties = () => {
             <CarouselContent>
               {featuredProperties.map((property) => (
                 <CarouselItem key={property.id} className="md:basis-1/2 lg:basis-1/3">
-                  <Card className="cursor-pointer" onClick={() => handleButtonClick(`View Property ${property.id}`)}>
+                  <Card className="cursor-pointer" onClick={() => handleViewProperty(property.id)}>
                     <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
                       <Home className="h-12 w-12" />
                     </div>
@@ -96,7 +93,7 @@ export const FeaturedProperties = () => {
                         className="w-full"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleButtonClick(`View Details of Property ${property.id}`);
+                          handleViewProperty(property.id);
                         }}
                       >
                         View Details

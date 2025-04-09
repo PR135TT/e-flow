@@ -4,6 +4,8 @@ import { transformPropertyData } from './utils';
 
 export async function getPropertyById(id: string) {
   try {
+    console.log("Fetching property with ID:", id);
+    
     // First, get the property details
     const { data: propertyData, error: propertyError } = await supabase
       .from('properties')
@@ -16,6 +18,13 @@ export async function getPropertyById(id: string) {
       return null;
     }
     
+    if (!propertyData) {
+      console.log('No property found with ID:', id);
+      return null;
+    }
+    
+    console.log("Property data from DB:", propertyData);
+    
     // If there's an agent_id, try to get agent details
     let agentData = null;
     if (propertyData.agent_id) {
@@ -27,6 +36,7 @@ export async function getPropertyById(id: string) {
         
       if (!agentError && agent) {
         agentData = agent;
+        console.log("Agent data:", agentData);
       } else if (agentError) {
         console.error('Error fetching agent data:', agentError);
       }
@@ -41,6 +51,7 @@ export async function getPropertyById(id: string) {
       property.agentCompany = agentData.company;
     }
     
+    console.log("Transformed property data:", property);
     return property;
   } catch (error) {
     console.error('Error in getPropertyById:', error);
