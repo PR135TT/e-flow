@@ -14,40 +14,70 @@ export async function approveProperty(propertyId: string) {
     return { success: false, error: propertyError.message };
   }
   
-  const { data: submissionData, error: submissionError } = await supabase
+  // Find the corresponding property submission for this property
+  const { data: submissionData, error: submissionQueryError } = await supabase
+    .from('property_submissions')
+    .select('*')
+    .eq('property_id', propertyId);
+  
+  if (submissionQueryError) {
+    console.error('Error querying property submissions:', submissionQueryError);
+    return { 
+      success: true, 
+      property: propertyData,
+      error: 'Property approved but failed to find submission',
+      tokensAwarded: 0
+    };
+  }
+  
+  // If no submission found, just return success with the property
+  if (!submissionData || submissionData.length === 0) {
+    console.log('No property submission found for property:', propertyId);
+    return { 
+      success: true, 
+      property: propertyData,
+      tokensAwarded: 0 
+    };
+  }
+  
+  // Update the first matching submission (there should ideally be only one)
+  const submission = submissionData[0];
+  const tokensAwarded = submission.tokens_awarded || 0;
+  
+  const { error: updateError } = await supabase
     .from('property_submissions')
     .update({ status: 'approved' })
-    .eq('property_id', propertyId)
-    .select()
-    .single();
+    .eq('id', submission.id);
   
-  if (submissionError) {
-    console.error('Error updating submission status:', submissionError);
-    return { success: false, error: submissionError.message };
+  if (updateError) {
+    console.error('Error updating submission status:', updateError);
+    return { 
+      success: true, 
+      property: propertyData,
+      error: 'Property approved but failed to update submission status',
+      tokensAwarded
+    };
   }
   
   // Award tokens to the user when the property is approved
-  if (submissionData) {
-    const tokensAwarded = submissionData.tokens_awarded || 0;
-    
-    // Update user's tokens
+  if (submission.user_id) {
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('tokens')
-      .eq('id', submissionData.user_id)
+      .eq('id', submission.user_id)
       .single();
       
     if (!userError && userData) {
       const currentTokens = userData.tokens || 0;
       const newTokens = currentTokens + tokensAwarded;
       
-      const { error: updateError } = await supabase
+      const { error: updateTokensError } = await supabase
         .from('users')
         .update({ tokens: newTokens })
-        .eq('id', submissionData.user_id);
+        .eq('id', submission.user_id);
         
-      if (updateError) {
-        console.error('Error updating user tokens:', updateError);
+      if (updateTokensError) {
+        console.error('Error updating user tokens:', updateTokensError);
         return { 
           success: true, 
           property: propertyData,
@@ -64,17 +94,11 @@ export async function approveProperty(propertyId: string) {
         error: 'Property approved but failed to award tokens'
       };
     }
-    
-    return { 
-      success: true, 
-      property: propertyData,
-      tokensAwarded
-    };
   }
   
   return { 
     success: true, 
     property: propertyData,
-    tokensAwarded: 0
+    tokensAwarded
   };
 }
