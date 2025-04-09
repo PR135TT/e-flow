@@ -23,13 +23,13 @@ export const GoogleAuthButton = ({
       setIsLoading(true);
       if (onLoadingChange) onLoadingChange(true);
       
-      // Get the full URL for debugging
+      // Explicitly construct the correct redirect URL
+      // Use the window location's protocol, hostname, and port
       const redirectUrl = `${window.location.origin}/auth/callback`;
       
       console.log("Starting Google authentication process");
-      console.log("Current origin:", window.location.origin);
-      console.log("Redirect URL:", redirectUrl);
-      console.log("Full page URL:", window.location.href);
+      console.log("Current location:", window.location.href);
+      console.log("Using redirect URL:", redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
