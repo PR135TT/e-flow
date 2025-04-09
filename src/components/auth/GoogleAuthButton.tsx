@@ -3,18 +3,26 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface GoogleAuthButtonProps {
   mode: "signin" | "signup";
   className?: string;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
-export const GoogleAuthButton = ({ mode, className = "" }: GoogleAuthButtonProps) => {
+export const GoogleAuthButton = ({ 
+  mode, 
+  className = "", 
+  onLoadingChange 
+}: GoogleAuthButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
     try {
       setIsLoading(true);
+      if (onLoadingChange) onLoadingChange(true);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -35,19 +43,22 @@ export const GoogleAuthButton = ({ mode, className = "" }: GoogleAuthButtonProps
       console.error("Google sign in error:", error);
       toast.error(error.message || `Failed to ${mode === 'signin' ? 'sign in' : 'sign up'} with Google. Please try again.`);
       setIsLoading(false);
+      if (onLoadingChange) onLoadingChange(false);
     }
   };
 
   return (
     <Button
       type="button"
-      variant="outline"
       onClick={handleGoogleAuth}
       disabled={isLoading}
-      className={`w-full flex items-center justify-center gap-2 ${className}`}
+      className={`flex items-center justify-center gap-2 ${className}`}
     >
       {isLoading ? (
-        "Connecting..."
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Connecting...
+        </>
       ) : (
         <>
           <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">

@@ -1,12 +1,12 @@
 
 import { SignUpHeader } from "@/components/auth/SignUpHeader";
-import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SignUpFooter } from "@/components/auth/SignUpFooter";
 import { useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { AuthContext } from "@/App";
 import { toast } from "sonner";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -46,7 +46,21 @@ const SignUp = () => {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold mb-6 text-center">Create Your Account</h1>
-          <SignUpForm returnTo={returnTo} />
+          
+          <div className="space-y-6 animate-fade-in">
+            <p className="text-center text-gray-600 mb-4">
+              Sign up with your Google account to continue
+            </p>
+            
+            <GoogleAuthButton mode="signup" className="w-full" />
+            
+            <p className="text-center text-sm mt-6">
+              Already have an account?{" "}
+              <a href="/signin" className="text-blue-600 hover:underline">
+                Sign in
+              </a>
+            </p>
+          </div>
         </div>
       </main>
 
