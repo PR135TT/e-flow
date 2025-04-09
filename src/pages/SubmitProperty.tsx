@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { db } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AuthContext } from '@/App';
+import { Image, Upload, XCircle } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
@@ -35,6 +37,7 @@ const SubmitProperty = () => {
   const { user, session } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -52,6 +55,39 @@ const SubmitProperty = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    const checkBucket = async () => {
+      try {
+        const { data, error } = await supabase.storage.getBucket('properties-images');
+        if (error) {
+          console.error('Bucket check error:', error);
+          console.log('Attempting to verify if bucket exists differently...');
+          
+          // Try to list files in the bucket as another way to check
+          const { data: listData, error: listError } = await supabase.storage
+            .from('properties-images')
+            .list('');
+            
+          if (listError) {
+            console.error('Secondary bucket check error:', listError);
+            setBucketExists(false);
+          } else {
+            console.log('Bucket exists - confirmed by list operation');
+            setBucketExists(true);
+          }
+        } else {
+          console.log('Bucket exists:', data);
+          setBucketExists(true);
+        }
+      } catch (err) {
+        console.error('Failed to check bucket:', err);
+        setBucketExists(false);
+      }
+    };
+
+    checkBucket();
+  }, []);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -67,32 +103,36 @@ const SubmitProperty = () => {
     },
   });
 
-  useEffect(() => {
-    const checkBucket = async () => {
-      try {
-        const { data, error } = await supabase.storage.getBucket('properties-images');
-        if (error) {
-          console.error('Bucket check error:', error);
-          setBucketExists(false);
-        } else {
-          setBucketExists(true);
-        }
-      } catch (err) {
-        console.error('Failed to check bucket:', err);
-        setBucketExists(false);
-      }
-    };
-
-    checkBucket();
-  }, []);
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      setImageFiles(prev => [...prev, ...newFiles]);
       
-      const newUrls = newFiles.map(file => URL.createObjectURL(file));
-      setImageUrls(prev => [...prev, ...newUrls]);
+      // Validate file types and size
+      const validFiles = newFiles.filter(file => {
+        const isValidType = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
+        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+        
+        if (!isValidType) {
+          toast.error(`Invalid file type: ${file.name}`, {
+            description: "Only JPG, PNG, GIF, and WebP images are allowed"
+          });
+        }
+        
+        if (!isValidSize) {
+          toast.error(`File too large: ${file.name}`, {
+            description: "Maximum file size is 5MB"
+          });
+        }
+        
+        return isValidType && isValidSize;
+      });
+      
+      if (validFiles.length > 0) {
+        setImageFiles(prev => [...prev, ...validFiles]);
+        
+        const newUrls = validFiles.map(file => URL.createObjectURL(file));
+        setImageUrls(prev => [...prev, ...newUrls]);
+      }
     }
   };
 
@@ -104,11 +144,71 @@ const SubmitProperty = () => {
     });
   };
 
+  const uploadImages = async (userId: string) => {
+    if (!bucketExists || imageFiles.length === 0) {
+      console.log('No bucket exists or no images to upload');
+      return [];
+    }
+    
+    setUploading(true);
+    const uploadedUrls: string[] = [];
+    
+    try {
+      for (const file of imageFiles) {
+        const filePath = `${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+        
+        console.log(`Uploading file: ${filePath}`);
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('properties-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          toast.error(`Failed to upload ${file.name}`, {
+            description: uploadError.message
+          });
+          continue;
+        }
+        
+        console.log('Upload successful:', uploadData);
+        
+        const { data: urlData } = await supabase.storage
+          .from('properties-images')
+          .getPublicUrl(filePath);
+          
+        if (urlData && urlData.publicUrl) {
+          console.log('Public URL generated:', urlData.publicUrl);
+          uploadedUrls.push(urlData.publicUrl);
+        } else {
+          console.error('Failed to get public URL for uploaded file');
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error during image upload:', err);
+    } finally {
+      setUploading(false);
+    }
+    
+    console.log('All uploaded URLs:', uploadedUrls);
+    return uploadedUrls;
+  };
+
   const onSubmit = async (data: FormData) => {
+    if (!user) {
+      toast.error("You must be logged in to submit a property");
+      navigate("/signin");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
     try {
+      console.log("Starting property submission...");
+      
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -123,6 +223,7 @@ const SubmitProperty = () => {
       
       const userId = session.user.id;
       
+      // Check if user exists and create if not
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -130,6 +231,7 @@ const SubmitProperty = () => {
         .single();
       
       if (userError || !userData) {
+        console.log("User not found, creating user profile...");
         const { data: userInfo } = await supabase.auth.getUser();
         
         if (!userInfo.user) {
@@ -151,33 +253,30 @@ const SubmitProperty = () => {
         if (createUserError) {
           throw new Error(`Failed to create user profile: ${createUserError.message}`);
         }
+        
+        console.log("User profile created successfully");
       }
       
+      console.log("Uploading images...");
       let imageUrls: string[] = [];
       
       if (bucketExists && imageFiles.length > 0) {
-        for (const file of imageFiles) {
-          const filePath = `${userId}/${Date.now()}-${file.name}`;
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('properties-images')
-            .upload(filePath, file);
-            
-          if (uploadError) {
-            console.error('Image upload error:', uploadError);
-            continue;
-          }
-          
-          const { data: urlData } = await supabase.storage
-            .from('properties-images')
-            .getPublicUrl(filePath);
-            
-          if (urlData && urlData.publicUrl) {
-            imageUrls.push(urlData.publicUrl);
-          }
+        toast.info("Uploading images...", {
+          description: "Please wait while we upload your property images"
+        });
+        
+        imageUrls = await uploadImages(userId);
+        
+        if (imageUrls.length > 0) {
+          toast.success(`${imageUrls.length} images uploaded successfully`);
+        } else if (imageFiles.length > 0) {
+          toast.error("Failed to upload images", {
+            description: "Your property will be submitted without images"
+          });
         }
       }
       
+      console.log("Submitting property data with images:", imageUrls);
       const propertySubmission = await db.submitPropertyInfo(userId, {
         title: data.title,
         description: data.description,
@@ -195,6 +294,7 @@ const SubmitProperty = () => {
         throw new Error('Failed to submit property');
       }
       
+      console.log("Property submitted successfully:", propertySubmission);
       setSubmissionResult(propertySubmission);
       
       toast.success('Property submitted successfully', {
@@ -432,39 +532,57 @@ const SubmitProperty = () => {
                 {bucketExists && (
                   <div>
                     <FormLabel className="block mb-2">Property Images</FormLabel>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageChange}
-                      className="mb-4"
-                    />
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                      <Input
+                        type="file"
+                        accept="image/png,image/jpeg,image/gif,image/webp"
+                        multiple
+                        onChange={handleImageChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                        <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WebP up to 5MB</p>
+                      </div>
+                    </div>
                     
                     {imageUrls.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                         {imageUrls.map((url, index) => (
                           <div key={index} className="relative group">
-                            <img 
-                              src={url} 
-                              alt={`Preview ${index}`} 
-                              className="w-full h-24 object-cover rounded-md" 
-                            />
+                            <div className="h-24 overflow-hidden rounded-md border border-gray-200">
+                              <img 
+                                src={url} 
+                                alt={`Preview ${index + 1}`} 
+                                className="w-full h-full object-cover" 
+                              />
+                            </div>
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-90 hover:opacity-100"
+                              aria-label="Remove image"
                             >
-                              ×
+                              <XCircle className="h-5 w-5" />
                             </button>
                           </div>
                         ))}
                       </div>
                     )}
+                    
+                    <FormDescription className="mt-2">
+                      Adding high-quality images will increase your token rewards.
+                    </FormDescription>
                   </div>
                 )}
                 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Submitting...' : 'Submit Property Information'}
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading || uploading}
+                >
+                  {loading || uploading ? 'Processing...' : 'Submit Property Information'}
                 </Button>
               </form>
             </Form>

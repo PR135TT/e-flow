@@ -30,7 +30,7 @@ export async function getPropertyById(id: string) {
     if (propertyData.agent_id) {
       const { data: agent, error: agentError } = await supabase
         .from('users')
-        .select('name, company')
+        .select('name, company, phone, email')
         .eq('id', propertyData.agent_id)
         .maybeSingle();
         
@@ -42,6 +42,23 @@ export async function getPropertyById(id: string) {
       }
     }
     
+    // Get owner details if available
+    let ownerData = null;
+    if (propertyData.owner_id) {
+      const { data: owner, error: ownerError } = await supabase
+        .from('users')
+        .select('name, phone, email')
+        .eq('id', propertyData.owner_id)
+        .maybeSingle();
+        
+      if (!ownerError && owner) {
+        ownerData = owner;
+        console.log("Owner data:", ownerData);
+      } else if (ownerError) {
+        console.error('Error fetching owner data:', ownerError);
+      }
+    }
+    
     // Transform the property data
     const property = transformPropertyData(propertyData);
     
@@ -49,6 +66,15 @@ export async function getPropertyById(id: string) {
     if (agentData) {
       property.agentName = agentData.name;
       property.agentCompany = agentData.company;
+      property.agentPhone = agentData.phone;
+      property.agentEmail = agentData.email;
+    }
+    
+    // Add owner info if available
+    if (ownerData) {
+      property.ownerName = ownerData.name;
+      property.ownerPhone = ownerData.phone;
+      property.ownerEmail = ownerData.email;
     }
     
     console.log("Transformed property data:", property);
