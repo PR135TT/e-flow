@@ -83,6 +83,11 @@ const PropertyDetails = () => {
     );
   }
 
+  const agentInfo = {
+    name: property.agentName,
+    company: property.agentCompany
+  };
+
   return (
     <Shell>
       <div className="container mx-auto px-4 py-8 flex-grow">
@@ -129,6 +134,7 @@ const PropertyDetails = () => {
             status={property.status}
             isLoggedIn={!!user}
             onScheduleClick={() => setActiveTab("schedule")}
+            agentInfo={agentInfo}
           />
         </div>
       </div>

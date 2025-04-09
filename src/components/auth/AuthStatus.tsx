@@ -1,8 +1,8 @@
 
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "@/App";
-import { UserCheck, UserX, ShieldCheck, User, Calendar } from "lucide-react";
+import { UserCheck, UserX, ShieldCheck, User, Calendar, Coins } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   NavigationMenu,
@@ -17,10 +17,29 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useAdmin } from "@/hooks/useAdmin";
+import { db } from "@/lib/database";
 
 export const AuthStatus = () => {
   const { user } = useContext(AuthContext);
   const { isAdmin } = useAdmin();
+  const [tokens, setTokens] = useState<number | null>(null);
+  
+  useEffect(() => {
+    const fetchUserTokens = async () => {
+      if (user) {
+        try {
+          const userData = await db.getUserById(user.id);
+          if (userData) {
+            setTokens(userData.tokens);
+          }
+        } catch (error) {
+          console.error("Error fetching user tokens:", error);
+        }
+      }
+    };
+    
+    fetchUserTokens();
+  }, [user]);
   
   const handleSignOut = async () => {
     try {
@@ -58,6 +77,12 @@ export const AuthStatus = () => {
                   <div className="mb-2 p-2">
                     <p className="text-sm font-medium">Signed in as:</p>
                     <p className="text-xs truncate">{user.email}</p>
+                    {tokens !== null && (
+                      <div className="flex items-center gap-1 mt-1 text-sm text-blue-600">
+                        <Coins className="h-3.5 w-3.5" />
+                        <span>{tokens} tokens</span>
+                      </div>
+                    )}
                     {isAdmin && (
                       <span className="inline-flex items-center mt-1 text-xs font-medium text-yellow-600">
                         <ShieldCheck className="h-3 w-3 mr-1" />

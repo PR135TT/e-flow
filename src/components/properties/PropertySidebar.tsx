@@ -12,9 +12,19 @@ interface PropertySidebarProps {
   status: string;
   isLoggedIn: boolean;
   onScheduleClick: () => void;
+  agentInfo?: {
+    name?: string;
+    company?: string;
+  };
 }
 
-export function PropertySidebar({ price, status, isLoggedIn, onScheduleClick }: PropertySidebarProps) {
+export function PropertySidebar({ 
+  price, 
+  status, 
+  isLoggedIn, 
+  onScheduleClick,
+  agentInfo 
+}: PropertySidebarProps) {
   const navigate = useNavigate();
   
   const handleScheduleClick = () => {
@@ -52,7 +62,7 @@ export function PropertySidebar({ price, status, isLoggedIn, onScheduleClick }: 
         </CardContent>
       </Card>
 
-      <PropertyContactInfo />
+      <PropertyContactInfo agentInfo={agentInfo} />
     </div>
   );
 }
