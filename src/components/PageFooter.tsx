@@ -5,7 +5,7 @@ export const PageFooter = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gray-900 text-white py-12">
+    <footer className="bg-gray-900 text-white py-12 mt-auto">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -36,13 +36,6 @@ export const PageFooter = () => {
               <li className="text-gray-400">Lagos, Nigeria</li>
               <li className="text-gray-400">info@euronestate.com</li>
               <li className="text-gray-400">+234 123 456 7890</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Legal</h4>
-            <ul className="space-y-2">
-              <li><Link to="/terms-of-service" className="text-gray-400 hover:text-white">Terms of Service</Link></li>
-              <li><Link to="/privacy-policy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>

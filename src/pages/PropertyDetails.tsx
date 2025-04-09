@@ -58,8 +58,8 @@ const PropertyDetails = () => {
   if (isLoading) {
     return (
       <Shell>
-        <div className="container mx-auto px-4 py-12 flex-grow">
-          <div className="flex justify-center items-center h-64">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex justify-center items-center min-h-[60vh]">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         </div>
@@ -70,12 +70,12 @@ const PropertyDetails = () => {
   if (!property) {
     return (
       <Shell>
-        <div className="container mx-auto px-4 py-12 flex-grow">
-          <div className="text-center">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center min-h-[60vh] flex flex-col justify-center">
             <h2 className="text-2xl font-bold text-gray-800">Property Not Found</h2>
             <p className="mt-2 text-gray-600">We couldn't find the property you're looking for.</p>
             <Button 
-              className="mt-4" 
+              className="mt-4 mx-auto" 
               onClick={() => navigate("/properties")}
             >
               Return to Properties
@@ -93,7 +93,7 @@ const PropertyDetails = () => {
 
   return (
     <Shell>
-      <div className="container mx-auto px-4 py-8 flex-grow">
+      <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-200px)]">
         <Button 
           variant="ghost" 
           className="mb-6 flex items-center text-blue-600"

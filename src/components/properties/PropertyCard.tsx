@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { LazyImage } from "@/components/ui/lazy-image";
 import { PropertyApprovalActions } from "@/components/admin/PropertyApprovalActions";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useNavigate } from "react-router-dom";
 
 interface PropertyCardProps {
   property: Property;
@@ -23,6 +24,8 @@ export const PropertyCard = ({
   onPropertyUpdated 
 }: PropertyCardProps) => {
   const { isAdmin } = useAdmin();
+  const navigate = useNavigate();
+  
   const displayFeature = (value: number | null, unit: string) => {
     return value ? `${value} ${unit}` : "N/A";
   };
@@ -35,7 +38,7 @@ export const PropertyCard = ({
 
   const handleViewDetails = () => {
     console.log("View details clicked for property ID:", property.id);
-    onViewDetails(property.id);
+    navigate(`/property/${property.id}`);
   };
 
   return (
@@ -52,7 +55,7 @@ export const PropertyCard = ({
           <LazyImage 
             src={property.images[0]} 
             alt={property.title} 
-            className="w-full h-full"
+            className="w-full h-full object-cover"
             fallbackIcon={<Home className="h-12 w-12 text-gray-400" />}
           />
         ) : (

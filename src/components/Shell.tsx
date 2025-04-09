@@ -11,7 +11,7 @@ export function Shell({ children, hideHeader = false }: ShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
       {!hideHeader && <Header />}
-      <div className="flex-1">{children}</div>
+      <main className="flex-1">{children}</main>
       <PageFooter />
     </div>
   );
