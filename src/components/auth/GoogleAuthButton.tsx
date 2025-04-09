@@ -23,14 +23,18 @@ export const GoogleAuthButton = ({
       setIsLoading(true);
       if (onLoadingChange) onLoadingChange(true);
       
+      // Get the full URL for debugging
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      
       console.log("Starting Google authentication process");
       console.log("Current origin:", window.location.origin);
-      console.log("Redirect URL:", `${window.location.origin}/auth/callback`);
+      console.log("Redirect URL:", redirectUrl);
+      console.log("Full page URL:", window.location.href);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -42,6 +46,7 @@ export const GoogleAuthButton = ({
       
       if (error) {
         console.error("Google auth error:", error);
+        toast.error(`Authentication error: ${error.message}`);
         throw error;
       }
       

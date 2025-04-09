@@ -25,7 +25,15 @@ const AuthCallback = () => {
         
         if (errorParam) {
           console.error("Auth error detected:", errorParam, errorDescriptionParam);
-          throw new Error(errorDescriptionParam || errorParam);
+          let errorMessage = errorDescriptionParam || errorParam;
+          
+          // Handle common OAuth errors with more user-friendly messages
+          if (errorParam === 'redirect_uri_mismatch') {
+            errorMessage = 'Redirect URL mismatch. Please ensure the callback URL is configured correctly in Google Cloud Console.';
+            console.error('Received redirect_uri_mismatch error. Check that the following URL is added to your Google OAuth configuration:', window.location.origin);
+          }
+          
+          throw new Error(errorMessage);
         }
 
         // Get the session

@@ -36,130 +36,6 @@ export type Database = {
         }
         Relationships: []
       }
-      "Application for Merc": {
-        Row: {
-          id: string
-          job_id: string | null
-          status: string | null
-          submitted_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          id?: string
-          job_id?: string | null
-          status?: string | null
-          submitted_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          id?: string
-          job_id?: string | null
-          status?: string | null
-          submitted_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Application for Merc_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "Jobs for Merc"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "Application for Merc_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "Users for Merc"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      "Jobs for Merc": {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          location: string | null
-          requirements: Json | null
-          title: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          location?: string | null
-          requirements?: Json | null
-          title?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          location?: string | null
-          requirements?: Json | null
-          title?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Jobs for Merc_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "Users for Merc"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          created_at: string | null
-          delivery_option: string | null
-          delivery_time: string | null
-          id: string
-          product_id: string
-          quantity: number
-          status: string
-          total_price: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          delivery_option?: string | null
-          delivery_time?: string | null
-          id?: string
-          product_id: string
-          quantity: number
-          status?: string
-          total_price: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          delivery_option?: string | null
-          delivery_time?: string | null
-          id?: string
-          product_id?: string
-          quantity?: number
-          status?: string
-          total_price?: number
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "orders_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       products: {
         Row: {
           created_at: string | null
@@ -363,35 +239,6 @@ export type Database = {
           },
         ]
       }
-      "Resume for Merc": {
-        Row: {
-          id: string
-          resume_uploaded_at: string | null
-          resume_url: string | null
-          user_id: string | null
-        }
-        Insert: {
-          id?: string
-          resume_uploaded_at?: string | null
-          resume_url?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          id?: string
-          resume_uploaded_at?: string | null
-          resume_url?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Resume for Merc_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "Users for Merc"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       users: {
         Row: {
           company: string | null
@@ -425,30 +272,6 @@ export type Database = {
           phone?: string
           tokens?: number
           user_type?: string
-        }
-        Relationships: []
-      }
-      "Users for Merc": {
-        Row: {
-          created_at: string
-          designation: string | null
-          email: string | null
-          id: string
-          name: string | null
-        }
-        Insert: {
-          created_at?: string
-          designation?: string | null
-          email?: string | null
-          id?: string
-          name?: string | null
-        }
-        Update: {
-          created_at?: string
-          designation?: string | null
-          email?: string | null
-          id?: string
-          name?: string | null
         }
         Relationships: []
       }
