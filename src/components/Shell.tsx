@@ -4,12 +4,13 @@ import { PageFooter } from "@/components/PageFooter";
 
 interface ShellProps {
   children: React.ReactNode;
+  hideHeader?: boolean;
 }
 
-export function Shell({ children }: ShellProps) {
+export function Shell({ children, hideHeader = false }: ShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      {!hideHeader && <Header />}
       <div className="flex-1">{children}</div>
       <PageFooter />
     </div>

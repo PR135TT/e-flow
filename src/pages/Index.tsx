@@ -9,18 +9,14 @@ import { CallToActionSection } from "@/components/home/CallToActionSection";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <Shell hideHeader={true}>
       <HeroSection />
       <FeaturesSection />
       <TokenSection />
       <FeaturedProperties />
       <MarketAnalyticsSection />
       <CallToActionSection />
-      
-      <Shell>
-        {null}
-      </Shell>
-    </div>
+    </Shell>
   );
 };
 
