@@ -7,6 +7,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { getPropertiesByQuery } from "@/lib/database";
 import { PropertyType } from "@/lib/database.types";
 import { useNavigate } from "react-router-dom";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 export const FeaturedProperties = () => {
   const navigate = useNavigate();
@@ -72,8 +73,19 @@ export const FeaturedProperties = () => {
               {featuredProperties.map((property) => (
                 <CarouselItem key={property.id} className="md:basis-1/2 lg:basis-1/3">
                   <Card className="cursor-pointer" onClick={() => handleViewProperty(property.id)}>
-                    <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
-                      <Home className="h-12 w-12" />
+                    <div className="h-48 overflow-hidden">
+                      {property.images && property.images.length > 0 ? (
+                        <LazyImage
+                          src={property.images[0]}
+                          alt={property.title}
+                          className="w-full h-full object-cover"
+                          fallbackIcon={<Home className="h-12 w-12 text-white" />}
+                        />
+                      ) : (
+                        <div className="h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+                          <Home className="h-12 w-12" />
+                        </div>
+                      )}
                     </div>
                     <CardHeader>
                       <CardTitle>{property.title}</CardTitle>
