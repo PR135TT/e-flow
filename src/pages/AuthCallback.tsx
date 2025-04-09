@@ -12,33 +12,49 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // Log authentication debug information
+        console.log("Auth callback triggered");
+        console.log("URL:", window.location.href);
+        console.log("Search params:", location.search);
+        console.log("Hash:", location.hash);
+        
         // Check if there's an error in the URL
         const params = new URLSearchParams(location.search);
         const errorParam = params.get('error');
         const errorDescriptionParam = params.get('error_description');
         
         if (errorParam) {
+          console.error("Auth error detected:", errorParam, errorDescriptionParam);
           throw new Error(errorDescriptionParam || errorParam);
         }
 
         // Get the session
+        console.log("Fetching session from Supabase");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
+          console.error("Session error:", error);
           throw error;
         }
 
+        console.log("Session data:", data);
+
         if (data?.session) {
+          console.log("Valid session found");
           toast.success('Authentication successful!');
           navigate('/');
         } else {
+          console.log("No session found, checking hash parameters");
           // If no session found, try to exchange the code for a session
           const hashParams = new URLSearchParams(location.hash.substring(1));
+          
           if (hashParams.has('access_token')) {
+            console.log("Access token found in hash");
             // The hash contains the tokens from the OAuth provider
             toast.success('Authentication successful!');
             navigate('/');
           } else {
+            console.log("No access token in hash");
             // If no session and no tokens in hash, the user might have canceled the OAuth flow
             toast.info('Sign in was not completed');
             navigate('/signin');

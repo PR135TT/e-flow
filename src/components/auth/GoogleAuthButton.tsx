@@ -23,7 +23,11 @@ export const GoogleAuthButton = ({
       setIsLoading(true);
       if (onLoadingChange) onLoadingChange(true);
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log("Starting Google authentication process");
+      console.log("Current origin:", window.location.origin);
+      console.log("Redirect URL:", `${window.location.origin}/auth/callback`);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -34,7 +38,10 @@ export const GoogleAuthButton = ({
         }
       });
 
+      console.log("OAuth response:", data);
+      
       if (error) {
+        console.error("Google auth error:", error);
         throw error;
       }
       
