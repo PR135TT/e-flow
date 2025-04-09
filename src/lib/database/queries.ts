@@ -1,5 +1,6 @@
 
 import { supabase } from '../supabase';
+import { PropertyType } from '../database.types';
 
 // Query-related operations
 export const getPropertiesByQuery = async ({ 
@@ -47,7 +48,7 @@ export const getPropertiesByQuery = async ({
     return [];
   }
   
-  // Return the properties with the same property names as expected in the database.types.ts
+  // Transform the properties to use camelCase keys as expected by other components
   return data.map(property => ({
     id: property.id,
     title: property.title,
@@ -60,11 +61,11 @@ export const getPropertiesByQuery = async ({
     type: property.type,
     status: property.status,
     images: property.images || [],
-    owner_id: property.owner_id,
-    agent_id: property.agent_id,
-    company_id: property.company_id,
-    is_approved: property.is_approved,
-    created_at: property.created_at,
-    updated_at: property.updated_at
-  }));
+    ownerId: property.owner_id,
+    agentId: property.agent_id,
+    companyId: property.company_id,
+    isApproved: property.is_approved,
+    createdAt: property.created_at,
+    updatedAt: property.updated_at
+  })) as PropertyType[];
 };

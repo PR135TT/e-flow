@@ -12,15 +12,19 @@ export const FeaturedProperties = () => {
   const navigate = useNavigate();
   const [featuredProperties, setFeaturedProperties] = useState<PropertyType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFeaturedProperties = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const properties = await getPropertiesByQuery({ limit: 5 });
+        console.log("Fetched properties:", properties);
         setFeaturedProperties(properties);
-      } catch (error) {
-        console.error("Error fetching featured properties:", error);
+      } catch (err) {
+        console.error("Error fetching featured properties:", err);
+        setError("Failed to load properties");
       } finally {
         setIsLoading(false);
       }
@@ -60,6 +64,10 @@ export const FeaturedProperties = () => {
         {isLoading ? (
           <div className="flex justify-center items-center h-48">
             <p>Loading properties...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500">
+            <p>{error}</p>
           </div>
         ) : featuredProperties.length > 0 ? (
           <Carousel className="w-full max-w-5xl mx-auto">
@@ -106,6 +114,7 @@ export const FeaturedProperties = () => {
         ) : (
           <div className="text-center">
             <p>No properties available at the moment.</p>
+            <p className="text-sm text-gray-500 mt-2">Check if there are approved properties in the database.</p>
           </div>
         )}
       </div>
