@@ -338,6 +338,12 @@ const Index = () => {
                 <li className="text-gray-400">+234 123 456 7890</li>
               </ul>
             </div>
+            <div>
+              <h4 className="font-bold mb-4">Legal</h4>
+              <ul className="space-y-2">
+                <li><Link to="/privacy-policy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
+              </ul>
+            </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
             <p>&copy; {new Date().getFullYear()} Euron Estate. All rights reserved.</p>
