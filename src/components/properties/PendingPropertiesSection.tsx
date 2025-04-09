@@ -8,12 +8,14 @@ interface PendingPropertiesSectionProps {
   pendingProperties: Property[];
   isPendingLoading: boolean;
   handleViewDetails: (propertyId: string) => void;
+  onPropertyUpdated?: (propertyId: string, approved: boolean) => void;
 }
 
 export const PendingPropertiesSection = ({
   pendingProperties,
   isPendingLoading,
-  handleViewDetails
+  handleViewDetails,
+  onPropertyUpdated
 }: PendingPropertiesSectionProps) => {
   if (!pendingProperties.length && !isPendingLoading) {
     return null;
@@ -41,6 +43,7 @@ export const PendingPropertiesSection = ({
               property={property} 
               isPending={true}
               onViewDetails={handleViewDetails}
+              onPropertyUpdated={onPropertyUpdated}
             />
           ))}
         </div>

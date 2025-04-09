@@ -6,16 +6,31 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Property } from "@/lib/database/types";
 import { formatCurrency } from "@/lib/utils";
 import { LazyImage } from "@/components/ui/lazy-image";
+import { PropertyApprovalActions } from "@/components/admin/PropertyApprovalActions";
+import { useAdmin } from "@/hooks/useAdmin";
 
 interface PropertyCardProps {
   property: Property;
   isPending?: boolean;
   onViewDetails: (propertyId: string) => void;
+  onPropertyUpdated?: (propertyId: string, approved: boolean) => void;
 }
 
-export const PropertyCard = ({ property, isPending = false, onViewDetails }: PropertyCardProps) => {
+export const PropertyCard = ({ 
+  property, 
+  isPending = false, 
+  onViewDetails,
+  onPropertyUpdated 
+}: PropertyCardProps) => {
+  const { isAdmin } = useAdmin();
   const displayFeature = (value: number | null, unit: string) => {
     return value ? `${value} ${unit}` : "N/A";
+  };
+
+  const handlePropertyUpdated = (propertyId: string, approved: boolean) => {
+    if (onPropertyUpdated) {
+      onPropertyUpdated(propertyId, approved);
+    }
   };
 
   return (
@@ -56,6 +71,13 @@ export const PropertyCard = ({ property, isPending = false, onViewDetails }: Pro
           <MapPin className="h-4 w-4 text-red-500 mr-1" />
           <span>{property.location}</span>
         </div>
+        
+        {isAdmin && !property.isApproved && onPropertyUpdated && (
+          <PropertyApprovalActions 
+            property={property} 
+            onPropertyUpdated={handlePropertyUpdated} 
+          />
+        )}
       </CardContent>
       <CardFooter>
         <Button 

@@ -11,6 +11,7 @@ interface AvailablePropertiesSectionProps {
   handleViewDetails: (propertyId: string) => void;
   handleUploadProperty: () => void;
   clearSearch: () => void;
+  onPropertyUpdated?: (propertyId: string, approved: boolean) => void;
 }
 
 export const AvailablePropertiesSection = ({
@@ -19,7 +20,8 @@ export const AvailablePropertiesSection = ({
   searchQuery,
   handleViewDetails,
   handleUploadProperty,
-  clearSearch
+  clearSearch,
+  onPropertyUpdated
 }: AvailablePropertiesSectionProps) => {
   return (
     <>
@@ -60,6 +62,7 @@ export const AvailablePropertiesSection = ({
               key={property.id}
               property={property}
               onViewDetails={handleViewDetails}
+              onPropertyUpdated={onPropertyUpdated}
             />
           ))}
         </div>

@@ -67,5 +67,5 @@ export const getPropertiesByQuery = async ({
     isApproved: property.is_approved,
     createdAt: property.created_at,
     updatedAt: property.updated_at
-  })) as PropertyType[];
+  }));
 };
