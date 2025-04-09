@@ -28,6 +28,13 @@ export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
           Sign up
         </Link>
       </p>
+      
+      <p className="text-center text-xs text-gray-500 mt-4">
+        By signing in, you agree to our{" "}
+        <Link to="/privacy-policy" className="text-blue-600 hover:underline">
+          Privacy Policy
+        </Link>
+      </p>
     </div>
   );
 };

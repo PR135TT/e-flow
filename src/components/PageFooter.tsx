@@ -12,6 +12,7 @@ export const PageFooter = () => {
           <Link to="/tokens" className="text-gray-400 hover:text-white mx-2">Tokens</Link>
           <Link to="/blog" className="text-gray-400 hover:text-white mx-2">Blog</Link>
           <Link to="/help" className="text-gray-400 hover:text-white mx-2">Help Center</Link>
+          <Link to="/privacy-policy" className="text-gray-400 hover:text-white mx-2">Privacy Policy</Link>
         </div>
       </div>
     </footer>
