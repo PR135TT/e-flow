@@ -26,6 +26,12 @@ export interface Property {
   // Additional fields for agent information
   agentName?: string;
   agentCompany?: string;
+  agentPhone?: string;
+  agentEmail?: string;
+  // Additional fields for owner information
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
 }
 
 // Property Submission type
