@@ -1,25 +1,24 @@
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the URL hash
-        const hash = window.location.hash;
+        // Check if there's an error in the URL
+        const params = new URLSearchParams(location.search);
+        const errorParam = params.get('error');
+        const errorDescriptionParam = params.get('error_description');
         
-        // Check for errors in the hash
-        if (hash.includes('error=')) {
-          const errorMessage = hash.split('&')[0].split('=')[1];
-          toast.error(`Authentication error: ${decodeURIComponent(errorMessage)}`);
-          navigate('/signin');
-          return;
+        if (errorParam) {
+          throw new Error(errorDescriptionParam || errorParam);
         }
 
         // Get the session
@@ -33,9 +32,17 @@ const AuthCallback = () => {
           toast.success('Authentication successful!');
           navigate('/');
         } else {
-          // If no session found, the user might have canceled the OAuth flow
-          toast.info('Sign in was not completed');
-          navigate('/signin');
+          // If no session found, try to exchange the code for a session
+          const hashParams = new URLSearchParams(location.hash.substring(1));
+          if (hashParams.has('access_token')) {
+            // The hash contains the tokens from the OAuth provider
+            toast.success('Authentication successful!');
+            navigate('/');
+          } else {
+            // If no session and no tokens in hash, the user might have canceled the OAuth flow
+            toast.info('Sign in was not completed');
+            navigate('/signin');
+          }
         }
       } catch (error: any) {
         console.error('Error handling auth callback:', error);
@@ -45,7 +52,7 @@ const AuthCallback = () => {
     };
 
     handleAuthCallback();
-  }, [navigate]);
+  }, [navigate, location]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">

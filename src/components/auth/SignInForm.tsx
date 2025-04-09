@@ -1,8 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { Link } from "react-router-dom";
 import { GoogleAuthButton } from "./GoogleAuthButton";
 
 interface SignInFormProps {
@@ -11,7 +9,6 @@ interface SignInFormProps {
 
 export const SignInForm = ({ returnTo = '/' }: SignInFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   return (
     <div className="space-y-6 animate-fade-in">

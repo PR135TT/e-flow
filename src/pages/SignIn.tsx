@@ -13,8 +13,9 @@ const SignIn = () => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   
-  // Get the return path if it exists
-  const returnTo = location.state?.returnTo || '/';
+  // Get the return path from URL query params or default to home
+  const searchParams = new URLSearchParams(location.search);
+  const returnTo = searchParams.get('returnTo') || '/';
   
   // Check if user is already logged in and redirect if needed
   useEffect(() => {
