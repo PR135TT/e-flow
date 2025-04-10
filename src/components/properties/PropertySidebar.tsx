@@ -6,6 +6,10 @@ import { formatCurrency } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PropertyContactInfo } from "./PropertyContactInfo";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "@/App";
+import { Coins } from "lucide-react";
+import { db } from "@/lib/database";
 
 interface PropertySidebarProps {
   price: number;
@@ -26,6 +30,25 @@ export function PropertySidebar({
   agentInfo 
 }: PropertySidebarProps) {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const [tokens, setTokens] = useState<number | null>(null);
+  
+  useEffect(() => {
+    const fetchUserTokens = async () => {
+      if (user) {
+        try {
+          const userData = await db.getUserById(user.id);
+          if (userData) {
+            setTokens(userData.tokens);
+          }
+        } catch (error) {
+          console.error("Error fetching user tokens:", error);
+        }
+      }
+    };
+    
+    fetchUserTokens();
+  }, [user]);
   
   const handleScheduleClick = () => {
     if (!isLoggedIn) {
@@ -54,6 +77,12 @@ export function PropertySidebar({
               For {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
           </div>
+          {isLoggedIn && tokens !== null && (
+            <div className="flex items-center gap-2 mb-4 text-sm font-medium">
+              <Coins className="h-4 w-4 text-yellow-500" />
+              <span>Your Tokens: {tokens}</span>
+            </div>
+          )}
           <Separator className="my-4" />
           <div className="space-y-4">
             <Button className="w-full" onClick={handleScheduleClick}>Schedule Viewing</Button>
