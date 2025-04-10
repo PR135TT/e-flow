@@ -42,7 +42,7 @@ export function PropertySidebar({
   };
 
   return (
-    <div className="lg:col-span-1">
+    <div className="lg:sticky lg:top-8">
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="text-3xl font-bold text-blue-600 mb-4">
