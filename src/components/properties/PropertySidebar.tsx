@@ -33,21 +33,39 @@ export function PropertySidebar({
   const { user } = useContext(AuthContext);
   const [tokens, setTokens] = useState<number | null>(null);
   
-  useEffect(() => {
-    const fetchUserTokens = async () => {
-      if (user) {
-        try {
-          const userData = await db.getUserById(user.id);
-          if (userData) {
-            setTokens(userData.tokens);
-          }
-        } catch (error) {
-          console.error("Error fetching user tokens:", error);
+  const fetchUserTokens = async () => {
+    if (user) {
+      try {
+        const userData = await db.getUserById(user.id);
+        if (userData) {
+          setTokens(userData.tokens);
         }
+      } catch (error) {
+        console.error("Error fetching user tokens:", error);
       }
+    }
+  };
+  
+  useEffect(() => {
+    fetchUserTokens();
+    
+    // Set up an interval to refresh tokens every 60 seconds
+    const intervalId = setInterval(() => {
+      fetchUserTokens();
+    }, 60000);
+    
+    // Refresh tokens when window gets focus
+    const handleFocus = () => {
+      fetchUserTokens();
     };
     
-    fetchUserTokens();
+    window.addEventListener('focus', handleFocus);
+    
+    // Clean up on unmount
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [user]);
   
   const handleScheduleClick = () => {

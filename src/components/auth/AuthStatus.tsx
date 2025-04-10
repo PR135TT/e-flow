@@ -24,21 +24,43 @@ export const AuthStatus = () => {
   const { isAdmin } = useAdmin();
   const [tokens, setTokens] = useState<number | null>(null);
   
-  useEffect(() => {
-    const fetchUserTokens = async () => {
-      if (user) {
-        try {
-          const userData = await db.getUserById(user.id);
-          if (userData) {
-            setTokens(userData.tokens);
-          }
-        } catch (error) {
-          console.error("Error fetching user tokens:", error);
+  const fetchUserTokens = async () => {
+    if (user) {
+      try {
+        const userData = await db.getUserById(user.id);
+        if (userData) {
+          setTokens(userData.tokens);
         }
+      } catch (error) {
+        console.error("Error fetching user tokens:", error);
       }
+    }
+  };
+  
+  // Fetch tokens when component mounts and when user changes
+  useEffect(() => {
+    fetchUserTokens();
+    
+    // Set up an interval to refresh tokens every 60 seconds
+    const intervalId = setInterval(() => {
+      fetchUserTokens();
+    }, 60000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [user]);
+  
+  // Refresh tokens when window gets focus
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchUserTokens();
     };
     
-    fetchUserTokens();
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [user]);
   
   const handleSignOut = async () => {
