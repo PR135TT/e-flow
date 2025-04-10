@@ -103,7 +103,7 @@ const PropertyDetails = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 order-2 lg:order-1">
+          <div className="lg:col-span-2">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
             <div className="flex items-center text-gray-500 mb-6">
               <MapPin className="h-5 w-5 text-red-500 mr-2" />
@@ -132,15 +132,13 @@ const PropertyDetails = () => {
             </Tabs>
           </div>
 
-          <div className="order-1 lg:order-2">
-            <PropertySidebar 
-              price={property.price}
-              status={property.status}
-              isLoggedIn={!!user}
-              onScheduleClick={() => setActiveTab("schedule")}
-              agentInfo={agentInfo}
-            />
-          </div>
+          <PropertySidebar 
+            price={property.price}
+            status={property.status}
+            isLoggedIn={!!user}
+            onScheduleClick={() => setActiveTab("schedule")}
+            agentInfo={agentInfo}
+          />
         </div>
       </div>
     </Shell>
