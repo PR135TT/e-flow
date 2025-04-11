@@ -2,6 +2,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchBar } from '../SearchBar';
+import { BrowserRouter } from 'react-router-dom';
+
+// Mock the SearchDropdown component
+vi.mock('../SearchDropdown', () => ({
+  SearchDropdown: () => <div data-testid="search-dropdown">Search Dropdown</div>
+}));
 
 describe('SearchBar', () => {
   it('renders search input and upload button', () => {
@@ -10,12 +16,14 @@ describe('SearchBar', () => {
     const mockHandleUploadProperty = vi.fn();
     
     render(
-      <SearchBar 
-        searchQuery="" 
-        setSearchQuery={mockSetSearchQuery} 
-        handleSearch={mockHandleSearch}
-        handleUploadProperty={mockHandleUploadProperty}
-      />
+      <BrowserRouter>
+        <SearchBar 
+          searchQuery="" 
+          setSearchQuery={mockSetSearchQuery} 
+          handleSearch={mockHandleSearch}
+          handleUploadProperty={mockHandleUploadProperty}
+        />
+      </BrowserRouter>
     );
     
     expect(screen.getByPlaceholderText(/search by location/i)).toBeInTheDocument();
@@ -29,12 +37,14 @@ describe('SearchBar', () => {
     const mockHandleUploadProperty = vi.fn();
     
     render(
-      <SearchBar 
-        searchQuery="test search" 
-        setSearchQuery={mockSetSearchQuery} 
-        handleSearch={mockHandleSearch}
-        handleUploadProperty={mockHandleUploadProperty}
-      />
+      <BrowserRouter>
+        <SearchBar 
+          searchQuery="test search" 
+          setSearchQuery={mockSetSearchQuery} 
+          handleSearch={mockHandleSearch}
+          handleUploadProperty={mockHandleUploadProperty}
+        />
+      </BrowserRouter>
     );
     
     const form = screen.getByRole('form');
@@ -49,12 +59,14 @@ describe('SearchBar', () => {
     const mockHandleUploadProperty = vi.fn();
     
     render(
-      <SearchBar 
-        searchQuery="" 
-        setSearchQuery={mockSetSearchQuery} 
-        handleSearch={mockHandleSearch}
-        handleUploadProperty={mockHandleUploadProperty}
-      />
+      <BrowserRouter>
+        <SearchBar 
+          searchQuery="" 
+          setSearchQuery={mockSetSearchQuery} 
+          handleSearch={mockHandleSearch}
+          handleUploadProperty={mockHandleUploadProperty}
+        />
+      </BrowserRouter>
     );
     
     const searchInput = screen.getByPlaceholderText(/search by location/i);

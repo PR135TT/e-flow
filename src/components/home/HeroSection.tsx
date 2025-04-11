@@ -1,22 +1,42 @@
 
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AuthStatus } from "@/components/auth/AuthStatus";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { SearchDropdown } from "@/components/properties/SearchDropdown";
 
 export const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const searchFormRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Show dropdown if user has typed at least 2 characters
+    setIsDropdownVisible(searchQuery.length >= 2);
+    
+    // Click outside listener to close dropdown
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchFormRef.current && !searchFormRef.current.contains(event.target as Node)) {
+        setIsDropdownVisible(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       toast.success(`Searching for "${searchQuery}"`);
-      navigate('/properties');
+      navigate(`/properties?search=${encodeURIComponent(searchQuery)}`);
     } else {
       toast.error("Please enter a search term");
     }
@@ -24,6 +44,14 @@ export const HeroSection = () => {
 
   const handleUploadProperty = () => {
     navigate('/submit-property');
+  };
+  
+  const handleSelectProperty = (propertyId: string) => {
+    navigate(`/property/${propertyId}`);
+  };
+  
+  const closeDropdown = () => {
+    setIsDropdownVisible(false);
   };
 
   return (
@@ -44,13 +72,32 @@ export const HeroSection = () => {
             Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
           </p>
           <div className="w-full max-w-3xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
-            <form onSubmit={handleSearch} className="flex-grow max-w-4xl flex flex-col md:flex-row gap-3">
-              <Input 
-                className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70 md:min-w-[500px] lg:min-w-[600px]" 
-                placeholder="Search by location, property type, price range, or any property details..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <form 
+              ref={searchFormRef}
+              onSubmit={handleSearch} 
+              className="flex-grow max-w-4xl flex flex-col md:flex-row gap-3 relative"
+            >
+              <div className="relative flex-grow">
+                <Input 
+                  className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70 md:min-w-[500px] lg:min-w-[600px]" 
+                  placeholder="Search by location, property type, price range, or any property details..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => {
+                    if (searchQuery.length >= 2) {
+                      setIsDropdownVisible(true);
+                    }
+                  }}
+                />
+                
+                <SearchDropdown 
+                  searchQuery={searchQuery}
+                  isVisible={isDropdownVisible}
+                  onSelectProperty={handleSelectProperty}
+                  onClose={closeDropdown}
+                />
+              </div>
+              
               <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
                 <Search className="mr-2 h-4 w-4" /> Search Properties
               </Button>

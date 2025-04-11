@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Property } from "@/lib/database/types";
 import { db } from "@/lib/database";
@@ -11,6 +11,7 @@ import { PendingPropertiesSection } from "@/components/properties/PendingPropert
 import { AvailablePropertiesSection } from "@/components/properties/AvailablePropertiesSection";
 import { AuthContext } from "@/App";
 import { supabase } from "@/lib/supabase";
+import { getPropertiesByQuery } from "@/lib/database/queries";
 
 const Properties = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,12 +21,35 @@ const Properties = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPendingLoading, setIsPendingLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useContext(AuthContext);
+
+  // Extract search query from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const propertiesData = await db.getProperties();
+        setIsLoading(true);
+        let propertiesData;
+        
+        // If we have a search query from the URL, perform filtered search
+        if (searchQuery && searchQuery.length >= 2) {
+          propertiesData = await getPropertiesByQuery({ 
+            location: searchQuery,
+            limit: 50 
+          });
+          toast.success(`Found ${propertiesData.length} properties matching "${searchQuery}"`);
+        } else {
+          propertiesData = await db.getProperties();
+        }
+        
         console.log("Fetched properties:", propertiesData);
         setProperties(propertiesData);
         setFilteredProperties(propertiesData);
@@ -38,7 +62,7 @@ const Properties = () => {
     };
 
     fetchProperties();
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchPendingProperties = async () => {
@@ -93,22 +117,14 @@ const Properties = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      const filtered = properties.filter(property => 
-        property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.price.toString().includes(searchQuery)
-      );
+      // Update URL with search query
+      navigate(`/properties?search=${encodeURIComponent(searchQuery)}`);
       
-      setFilteredProperties(filtered);
-      
-      if (filtered.length === 0) {
-        toast.info("No properties found matching your search criteria");
-      } else {
-        toast.success(`Found ${filtered.length} properties matching "${searchQuery}"`);
-      }
+      // Filter is handled by the useEffect that watches searchQuery
     } else {
       setFilteredProperties(properties);
+      // Remove search param from URL
+      navigate('/properties');
     }
   };
 
@@ -124,6 +140,7 @@ const Properties = () => {
   const clearSearch = () => {
     setSearchQuery("");
     setFilteredProperties(properties);
+    navigate('/properties');
   };
 
   return (
