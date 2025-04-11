@@ -8,12 +8,14 @@ import { AuthStatus } from "@/components/auth/AuthStatus";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { SearchDropdown } from "@/components/properties/SearchDropdown";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const searchFormRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Show dropdown if user has typed at least 2 characters
@@ -55,23 +57,23 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-[80vh] bg-gradient-to-r from-blue-900 to-purple-900 text-white">
+    <section className={`relative ${isMobile ? 'h-[60vh]' : 'h-[70vh]'} bg-gradient-to-r from-blue-900 to-purple-900 text-white`}>
       <div className="absolute inset-0 bg-black/40"></div>
-      <div className="relative z-10 pt-6 container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
+      <div className="relative z-10 pt-4 container mx-auto px-4">
+        <div className="flex justify-between items-center mb-4">
           <Link to="/" className="text-2xl font-bold">E Flow</Link>
           <div>
             <AuthStatus />
           </div>
         </div>
-        <div className="h-full flex flex-col justify-center items-start pt-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
+        <div className="h-full flex flex-col justify-center items-start pt-6">
+          <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-6xl'} font-bold mb-2 md:mb-4`}>
             Euron <span className="text-yellow-400">Estate</span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-2xl">
+          <p className={`${isMobile ? 'text-lg' : 'text-xl md:text-2xl'} mb-4 md:mb-8 max-w-2xl`}>
             Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
           </p>
-          <div className="w-full max-w-3xl bg-white/10 backdrop-blur-md p-4 rounded-lg flex flex-col md:flex-row gap-3">
+          <div className="w-full max-w-3xl bg-white/10 backdrop-blur-md p-3 md:p-4 rounded-lg flex flex-col md:flex-row gap-3">
             <form 
               ref={searchFormRef}
               onSubmit={handleSearch} 
@@ -80,7 +82,7 @@ export const HeroSection = () => {
               <div className="relative flex-grow">
                 <Input 
                   className="flex-grow border-0 bg-white/20 text-white placeholder:text-white/70 md:min-w-[500px] lg:min-w-[600px]" 
-                  placeholder="Search by location, property type, price range, or any property details..."
+                  placeholder={isMobile ? "Search properties..." : "Search by location, property type, price range, or any property details..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => {
@@ -99,14 +101,14 @@ export const HeroSection = () => {
               </div>
               
               <Button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Search className="mr-2 h-4 w-4" /> Search Properties
+                <Search className="mr-2 h-4 w-4" /> {isMobile ? "Search" : "Search Properties"}
               </Button>
             </form>
             <Button 
               onClick={handleUploadProperty}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
-              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
+              <PlusCircle className="mr-2 h-4 w-4" /> {isMobile ? "Upload" : "Upload Property"}
             </Button>
           </div>
         </div>
