@@ -2,48 +2,33 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { db } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { AuthContext } from '@/App';
-import { Image, Upload, XCircle } from 'lucide-react';
-
-const formSchema = z.object({
-  title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
-  description: z.string().min(20, { message: 'Description must be at least 20 characters' }),
-  price: z.coerce.number().positive({ message: 'Price must be a positive number' }),
-  location: z.string().min(3, { message: 'Location is required' }),
-  bedrooms: z.coerce.number().int().positive().optional(),
-  bathrooms: z.coerce.number().positive().optional(),
-  area: z.coerce.number().positive().optional(),
-  type: z.enum(['house', 'apartment', 'commercial', 'land']),
-  status: z.enum(['sale', 'rent']),
-  images: z.any().optional(),
-});
-
-type FormData = z.infer<typeof formSchema>;
+import { PropertyForm } from '@/components/properties/PropertyForm';
+import { SubmissionResult } from '@/components/properties/SubmissionResult';
+import { PropertyFormData } from '@/components/properties/PropertyFormSchema';
+import { useImageUpload } from '@/hooks/useImageUpload';
 
 const SubmitProperty = () => {
-  const { user, session } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [bucketExists, setBucketExists] = useState(true);
-  const isMobile = useIsMobile();
+  
+  const {
+    uploading,
+    imageFiles,
+    setImageFiles,
+    imageUrls,
+    setImageUrls,
+    bucketExists,
+    checkBucket,
+    uploadImages
+  } = useImageUpload();
 
   useEffect(() => {
     if (!user) {
@@ -56,147 +41,10 @@ const SubmitProperty = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    const checkBucket = async () => {
-      try {
-        const { data, error } = await supabase.storage.getBucket('properties-images');
-        if (error) {
-          console.error('Bucket check error:', error);
-          console.log('Attempting to verify if bucket exists differently...');
-          
-          // Try to list files in the bucket as another way to check
-          const { data: listData, error: listError } = await supabase.storage
-            .from('properties-images')
-            .list('');
-            
-          if (listError) {
-            console.error('Secondary bucket check error:', listError);
-            setBucketExists(false);
-          } else {
-            console.log('Bucket exists - confirmed by list operation');
-            setBucketExists(true);
-          }
-        } else {
-          console.log('Bucket exists:', data);
-          setBucketExists(true);
-        }
-      } catch (err) {
-        console.error('Failed to check bucket:', err);
-        setBucketExists(false);
-      }
-    };
-
     checkBucket();
   }, []);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      price: 0,
-      location: '',
-      bedrooms: undefined,
-      bathrooms: undefined,
-      area: undefined,
-      type: 'house',
-      status: 'sale',
-    },
-  });
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      
-      // Validate file types and size
-      const validFiles = newFiles.filter(file => {
-        const isValidType = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
-        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
-        
-        if (!isValidType) {
-          toast.error(`Invalid file type: ${file.name}`, {
-            description: "Only JPG, PNG, GIF, and WebP images are allowed"
-          });
-        }
-        
-        if (!isValidSize) {
-          toast.error(`File too large: ${file.name}`, {
-            description: "Maximum file size is 5MB"
-          });
-        }
-        
-        return isValidType && isValidSize;
-      });
-      
-      if (validFiles.length > 0) {
-        setImageFiles(prev => [...prev, ...validFiles]);
-        
-        const newUrls = validFiles.map(file => URL.createObjectURL(file));
-        setImageUrls(prev => [...prev, ...newUrls]);
-      }
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => {
-      URL.revokeObjectURL(prev[index]);
-      return prev.filter((_, i) => i !== index);
-    });
-  };
-
-  const uploadImages = async (userId: string) => {
-    if (!bucketExists || imageFiles.length === 0) {
-      console.log('No bucket exists or no images to upload');
-      return [];
-    }
-    
-    setUploading(true);
-    const uploadedUrls: string[] = [];
-    
-    try {
-      for (const file of imageFiles) {
-        const filePath = `${userId}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-        
-        console.log(`Uploading file: ${filePath}`);
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('properties-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-          
-        if (uploadError) {
-          console.error('Image upload error:', uploadError);
-          toast.error(`Failed to upload ${file.name}`, {
-            description: uploadError.message
-          });
-          continue;
-        }
-        
-        console.log('Upload successful:', uploadData);
-        
-        const { data: urlData } = await supabase.storage
-          .from('properties-images')
-          .getPublicUrl(filePath);
-          
-        if (urlData && urlData.publicUrl) {
-          console.log('Public URL generated:', urlData.publicUrl);
-          uploadedUrls.push(urlData.publicUrl);
-        } else {
-          console.error('Failed to get public URL for uploaded file');
-        }
-      }
-    } catch (err) {
-      console.error('Unexpected error during image upload:', err);
-    } finally {
-      setUploading(false);
-    }
-    
-    console.log('All uploaded URLs:', uploadedUrls);
-    return uploadedUrls;
-  };
-
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: PropertyFormData) => {
     if (!user) {
       toast.error("You must be logged in to submit a property");
       navigate("/signin");
@@ -356,16 +204,7 @@ const SubmitProperty = () => {
       )}
       
       {submissionResult ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-green-600">Submission Successful!</CardTitle>
-            <CardDescription>Your property information has been submitted for review.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>You've earned <span className="font-bold">{submissionResult.tokensAwarded}</span> tokens for this submission!</p>
-            <p className="text-muted-foreground mt-2">Redirecting to home page...</p>
-          </CardContent>
-        </Card>
+        <SubmissionResult tokensAwarded={submissionResult.tokensAwarded} />
       ) : (
         <Card>
           <CardHeader>
@@ -373,219 +212,16 @@ const SubmitProperty = () => {
             <CardDescription>Fill out the form with accurate property information</CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Property Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Modern Apartment in Downtown" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="0" placeholder="250000" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Lagos, Nigeria" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="bedrooms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bedrooms</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="0" placeholder="3" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="bathrooms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bathrooms</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="0" step="0.5" placeholder="2" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="area"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Area (sq ft/m)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="0" placeholder="1200" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Property Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select property type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="house">House</SelectItem>
-                            <SelectItem value="apartment">Apartment</SelectItem>
-                            <SelectItem value="commercial">Commercial</SelectItem>
-                            <SelectItem value="land">Land</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Listing Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select listing status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="sale">For Sale</SelectItem>
-                            <SelectItem value="rent">For Rent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Provide a detailed description of the property..." 
-                          className="min-h-[120px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {bucketExists && (
-                  <div>
-                    <FormLabel className="block mb-2">Property Images</FormLabel>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 text-center hover:bg-gray-50 transition cursor-pointer relative">
-                      <Input
-                        type="file"
-                        accept="image/png,image/jpeg,image/gif,image/webp"
-                        multiple
-                        onChange={handleImageChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <div className="flex flex-col items-center justify-center py-4">
-                        <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                        <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                        <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WebP up to 5MB</p>
-                      </div>
-                    </div>
-                    
-                    {imageUrls.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                        {imageUrls.map((url, index) => (
-                          <div key={index} className="relative group">
-                            <div className="h-24 overflow-hidden rounded-md border border-gray-200">
-                              <img 
-                                src={url} 
-                                alt={`Preview ${index + 1}`} 
-                                className="w-full h-full object-cover" 
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-90 hover:opacity-100"
-                              aria-label="Remove image"
-                            >
-                              <XCircle className="h-5 w-5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <FormDescription className="mt-2">
-                      Adding high-quality images will increase your token rewards.
-                    </FormDescription>
-                  </div>
-                )}
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={loading || uploading}
-                >
-                  {loading || uploading ? 'Processing...' : 'Submit Property Information'}
-                </Button>
-              </form>
-            </Form>
+            <PropertyForm
+              onSubmit={onSubmit}
+              loading={loading}
+              uploading={uploading}
+              imageFiles={imageFiles}
+              setImageFiles={setImageFiles}
+              imageUrls={imageUrls}
+              setImageUrls={setImageUrls}
+              bucketExists={bucketExists}
+            />
           </CardContent>
           <CardFooter className="flex justify-center border-t pt-4">
             <p className="text-sm text-muted-foreground text-center">

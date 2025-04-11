@@ -9,12 +9,14 @@ import { AuthContext } from "@/App";
 import { Loader2 } from "lucide-react";
 
 const MyProperties = () => {
-  const { user, isAuthenticated, isLoading: authLoading } = useContext(AuthContext);
+  const { user, session } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("properties");
+  const isAuthenticated = !!user;
+  const isLoading = false; // We don't have a loading state in our AuthContext, so we'll use a static value
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       navigate("/signin", { 
         state: { 
           returnTo: "/my-properties",
@@ -22,9 +24,9 @@ const MyProperties = () => {
         } 
       });
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
-  if (authLoading) {
+  if (isLoading) {
     return (
       <Shell>
         <div className="container mx-auto px-4 py-8">
