@@ -92,3 +92,58 @@ export const getPropertiesByQuery = async ({
   // Use the transformPropertyData utility to properly format properties
   return data.map(property => transformPropertyData(property));
 };
+
+// Get properties submitted by a specific user
+export const getUserSubmittedProperties = async (userId: string) => {
+  if (!userId) {
+    console.error('User ID is required to fetch submitted properties');
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('owner_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching user submitted properties:', error);
+    return [];
+  }
+
+  return data.map(property => transformPropertyData(property));
+};
+
+// Update an existing property
+export const updateProperty = async (propertyId: string, propertyData: Partial<PropertyType>) => {
+  if (!propertyId) {
+    console.error('Property ID is required to update a property');
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('properties')
+    .update({
+      title: propertyData.title,
+      description: propertyData.description,
+      price: propertyData.price,
+      location: propertyData.location,
+      bedrooms: propertyData.bedrooms,
+      bathrooms: propertyData.bathrooms,
+      area: propertyData.area,
+      type: propertyData.type,
+      status: propertyData.status,
+      images: propertyData.images,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', propertyId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating property:', error);
+    return null;
+  }
+
+  return transformPropertyData(data);
+};

@@ -1,16 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Home, PlusCircle } from "lucide-react";
+import { Home, PlusCircle, FileEdit } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { getPropertiesByQuery } from "@/lib/database/queries";
 import { Property } from "@/lib/database/types";
 import { useNavigate } from "react-router-dom";
 import { LazyImage } from "@/components/ui/lazy-image";
+import { AuthContext } from "@/App";
 
 export const FeaturedProperties = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,10 @@ export const FeaturedProperties = () => {
     navigate('/submit-property');
   };
 
+  const handleManageProperties = () => {
+    navigate('/my-properties');
+  };
+
   const formatPrice = (price: number) => {
     return `₦${price.toLocaleString()}`;
   };
@@ -52,12 +58,23 @@ export const FeaturedProperties = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">Featured Properties</h2>
-          <Button 
-            onClick={handleUploadProperty}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
-          </Button>
+          <div className="flex gap-2">
+            {isAuthenticated && (
+              <Button 
+                onClick={handleManageProperties}
+                variant="outline"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <FileEdit className="mr-2 h-4 w-4" /> Manage Properties
+              </Button>
+            )}
+            <Button 
+              onClick={handleUploadProperty}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
+            </Button>
+          </div>
         </div>
         {isLoading ? (
           <div className="flex justify-center items-center h-48">
