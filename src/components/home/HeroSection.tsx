@@ -57,7 +57,7 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className={`relative ${isMobile ? 'h-[60vh]' : 'h-[70vh]'} bg-gradient-to-r from-blue-900 to-purple-900 text-white`}>
+    <section className={`relative ${isMobile ? 'h-[50vh]' : 'h-[55vh]'} bg-gradient-to-r from-blue-900 to-purple-900 text-white`}>
       <div className="absolute inset-0 bg-black/40"></div>
       <div className="relative z-10 pt-4 container mx-auto px-4">
         <div className="flex justify-between items-center mb-4">
@@ -67,10 +67,10 @@ export const HeroSection = () => {
           </div>
         </div>
         <div className="h-full flex flex-col justify-center items-start pt-6">
-          <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-6xl'} font-bold mb-2 md:mb-4`}>
+          <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'} font-bold mb-2 md:mb-4`}>
             Euron <span className="text-yellow-400">Estate</span>
           </h1>
-          <p className={`${isMobile ? 'text-lg' : 'text-xl md:text-2xl'} mb-4 md:mb-8 max-w-2xl`}>
+          <p className={`${isMobile ? 'text-lg' : 'text-xl md:text-xl'} mb-4 md:mb-6 max-w-2xl`}>
             Discover transparent property listings, market analytics, and connect directly with agents across Nigeria.
           </p>
           <div className="w-full max-w-3xl bg-white/10 backdrop-blur-md p-3 md:p-4 rounded-lg flex flex-col md:flex-row gap-3">
