@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { transformPropertyData } from "@/lib/database/properties/utils";
 
 interface SearchDropdownProps {
   searchQuery: string;
@@ -148,3 +149,4 @@ export const SearchDropdown = ({
     </Card>
   );
 };
+

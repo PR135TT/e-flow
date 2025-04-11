@@ -1,6 +1,7 @@
 
 import { supabase } from '../supabase';
 import { PropertyType } from '../database.types';
+import { transformPropertyData } from './properties/utils';
 
 export interface PropertyQueryParams {
   limit?: number;
@@ -88,24 +89,6 @@ export const getPropertiesByQuery = async ({
     return [];
   }
   
-  // Transform the properties to match the expected PropertyType format
-  return data.map(property => ({
-    id: property.id,
-    title: property.title,
-    description: property.description,
-    price: Number(property.price),
-    location: property.location,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
-    area: property.area,
-    type: property.type,
-    status: property.status,
-    images: property.images || [],
-    owner_id: property.owner_id,
-    agent_id: property.agent_id,
-    company_id: property.company_id,
-    is_approved: property.is_approved,
-    created_at: property.created_at,
-    updated_at: property.updated_at
-  } as unknown as PropertyType));
+  // Use the transformPropertyData utility to properly format properties
+  return data.map(property => transformPropertyData(property));
 };

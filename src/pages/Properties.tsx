@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +11,7 @@ import { AvailablePropertiesSection } from "@/components/properties/AvailablePro
 import { AuthContext } from "@/App";
 import { supabase } from "@/lib/supabase";
 import { getPropertiesByQuery } from "@/lib/database/queries";
+import { transformPropertyData } from "@/lib/database/properties/utils";
 
 const Properties = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,25 +83,7 @@ const Properties = () => {
           return;
         }
         
-        const pendingPropertiesData = data.map(property => ({
-          id: property.id,
-          title: property.title,
-          description: property.description,
-          price: Number(property.price),
-          location: property.location,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          area: property.area ? Number(property.area) : null,
-          type: property.type,
-          status: property.status,
-          images: property.images || [],
-          ownerId: property.owner_id,
-          agentId: property.agent_id,
-          companyId: property.company_id,
-          isApproved: property.is_approved,
-          createdAt: new Date(property.created_at),
-          updatedAt: new Date(property.updated_at)
-        } as Property));
+        const pendingPropertiesData = data.map(property => transformPropertyData(property));
         
         setPendingProperties(pendingPropertiesData);
       } catch (error) {
