@@ -47,20 +47,26 @@ export const ImageUploader = ({
       });
       
       if (validFiles.length > 0) {
-        setImageFiles(prev => [...prev, ...validFiles]);
+        const newFileList = [...imageFiles, ...validFiles];
+        setImageFiles(newFileList);
         
-        const newUrls = validFiles.map(file => URL.createObjectURL(file));
-        setImageUrls(prev => [...prev, ...newUrls]);
+        const newUrlList = [...imageUrls];
+        const newlyCreatedUrls = validFiles.map(file => URL.createObjectURL(file));
+        newUrlList.push(...newlyCreatedUrls);
+        setImageUrls(newUrlList);
       }
     }
   };
 
   const removeImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => {
-      URL.revokeObjectURL(prev[index]);
-      return prev.filter((_, i) => i !== index);
-    });
+    const newFiles = [...imageFiles];
+    newFiles.splice(index, 1);
+    setImageFiles(newFiles);
+    
+    const newUrls = [...imageUrls];
+    URL.revokeObjectURL(newUrls[index]);
+    newUrls.splice(index, 1);
+    setImageUrls(newUrls);
   };
 
   if (!bucketExists) {

@@ -4,6 +4,10 @@ import { Database } from "../database.types";
 // Re-export the Database types
 export type { Database };
 
+// Property type enums
+export type PropertyType = 'house' | 'apartment' | 'commercial' | 'land';
+export type PropertyStatus = 'sale' | 'rent';
+
 // Property type with extended fields
 export interface Property {
   id: string;
@@ -11,8 +15,8 @@ export interface Property {
   description: string;
   price: number;
   location: string;
-  status: string;
-  type: string;
+  status: PropertyStatus;
+  type: PropertyType;
   bedrooms: number | null;
   bathrooms: number | null;
   area: number | null;
@@ -57,12 +61,6 @@ export interface User {
   tokens: number;
   createdAt: Date;
 }
-
-// Property Type options
-export type PropertyType = 'house' | 'apartment' | 'commercial' | 'land';
-
-// Property Status options
-export type PropertyStatus = 'sale' | 'rent';
 
 // Appointment status options
 export type AppointmentStatus = 'pending' | 'approved' | 'rejected' | 'completed';

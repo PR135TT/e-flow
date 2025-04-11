@@ -1,5 +1,4 @@
 
-// Update the UserPropertiesList component to fix the property name issues
 import { useState, useEffect } from "react";
 import { Property } from "@/lib/database/types";
 import { getUserSubmittedProperties } from "@/lib/database/queries";
@@ -123,7 +122,7 @@ export const UserPropertiesList = ({ userId }: UserPropertiesListProps) => {
                     <span>{property.location}</span>
                   </div>
                 </div>
-                <Badge variant={property.isApproved ? "success" : "outline"}>
+                <Badge variant={property.isApproved ? "secondary" : "outline"} className={property.isApproved ? "bg-green-100 text-green-800" : ""}>
                   {property.isApproved ? "Approved" : "Pending"}
                 </Badge>
               </div>

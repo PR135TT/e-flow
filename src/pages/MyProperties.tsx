@@ -12,8 +12,19 @@ const MyProperties = () => {
   const { user, session } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("properties");
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Determine authentication status from user object
   const isAuthenticated = !!user;
-  const isLoading = false; // We don't have a loading state in our AuthContext, so we'll use a static value
+
+  useEffect(() => {
+    // Short timeout to simulate loading and avoid flickering
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

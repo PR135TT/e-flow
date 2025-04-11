@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import { AuthContext } from "@/App";
 
 export const FeaturedProperties = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +58,7 @@ export const FeaturedProperties = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">Featured Properties</h2>
           <div className="flex gap-2">
-            {isAuthenticated && (
+            {user && (
               <Button 
                 onClick={handleManageProperties}
                 variant="outline"

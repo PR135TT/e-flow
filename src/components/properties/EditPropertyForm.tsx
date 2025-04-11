@@ -9,7 +9,7 @@ import { PropertyFormData } from './PropertyFormSchema';
 import { PropertyForm } from './PropertyForm';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { updateProperty } from '@/lib/database/queries';
-import { Property } from '@/lib/database/types';
+import { Property, PropertyType, PropertyStatus } from '@/lib/database/types';
 
 export const EditPropertyForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +52,10 @@ export const EditPropertyForm = () => {
       }
       
       if (data) {
+        // Ensure the type and status are correct enum values
+        const propertyType = validatePropertyType(data.type);
+        const propertyStatus = validatePropertyStatus(data.status);
+        
         const transformedProperty: Property = {
           id: data.id,
           title: data.title,
@@ -61,8 +65,8 @@ export const EditPropertyForm = () => {
           bedrooms: data.bedrooms,
           bathrooms: data.bathrooms,
           area: data.area,
-          type: data.type as "house" | "apartment" | "commercial" | "land",
-          status: data.status as "sale" | "rent",
+          type: propertyType,
+          status: propertyStatus,
           images: data.images || [],
           isApproved: data.is_approved,
           createdAt: new Date(data.created_at),
@@ -79,6 +83,24 @@ export const EditPropertyForm = () => {
     } finally {
       setLoadingProperty(false);
     }
+  };
+
+  // Helper function to validate property type
+  const validatePropertyType = (type: string): PropertyType => {
+    if (['house', 'apartment', 'commercial', 'land'].includes(type)) {
+      return type as PropertyType;
+    }
+    console.warn(`Invalid property type: ${type}, defaulting to 'house'`);
+    return 'house';
+  };
+
+  // Helper function to validate property status
+  const validatePropertyStatus = (status: string): PropertyStatus => {
+    if (['sale', 'rent'].includes(status)) {
+      return status as PropertyStatus;
+    }
+    console.warn(`Invalid property status: ${status}, defaulting to 'sale'`);
+    return 'sale';
   };
 
   const onSubmit = async (data: PropertyFormData) => {

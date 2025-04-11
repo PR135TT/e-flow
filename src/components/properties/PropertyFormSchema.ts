@@ -1,5 +1,6 @@
 
 import { z } from 'zod';
+import { PropertyType, PropertyStatus } from '@/lib/database/types';
 
 export const propertyFormSchema = z.object({
   title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
@@ -9,8 +10,8 @@ export const propertyFormSchema = z.object({
   bedrooms: z.coerce.number().int().positive().optional(),
   bathrooms: z.coerce.number().positive().optional(),
   area: z.coerce.number().positive().optional(),
-  type: z.enum(['house', 'apartment', 'commercial', 'land']),
-  status: z.enum(['sale', 'rent']),
+  type: z.enum(['house', 'apartment', 'commercial', 'land'] as const),
+  status: z.enum(['sale', 'rent'] as const),
   images: z.any().optional(),
 });
 
