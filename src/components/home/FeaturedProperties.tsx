@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Home, PlusCircle } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { getPropertiesByQuery } from "@/lib/database";
-import { PropertyType } from "@/lib/database.types";
+import { getPropertiesByQuery } from "@/lib/database/queries";
+import { Property } from "@/lib/database/types";
 import { useNavigate } from "react-router-dom";
 import { LazyImage } from "@/components/ui/lazy-image";
 
 export const FeaturedProperties = () => {
   const navigate = useNavigate();
-  const [featuredProperties, setFeaturedProperties] = useState<PropertyType[]>([]);
+  const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
