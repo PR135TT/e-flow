@@ -11,9 +11,9 @@ const Index = () => {
   return (
     <Shell hideHeader={true}>
       <HeroSection />
+      <FeaturedProperties />
       <FeaturesSection />
       <TokenSection />
-      <FeaturedProperties />
       <MarketAnalyticsSection />
       <CallToActionSection />
     </Shell>
