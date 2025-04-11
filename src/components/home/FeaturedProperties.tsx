@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -55,8 +56,8 @@ export const FeaturedProperties = () => {
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">Featured Properties</h2>
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold mb-4 md:mb-0">Featured Properties</h2>
           <div className="flex gap-2">
             {user && (
               <Button 
