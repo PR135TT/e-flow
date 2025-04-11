@@ -59,15 +59,13 @@ export const FeaturedProperties = () => {
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <h2 className="text-3xl font-bold mb-4 md:mb-0">Featured Properties</h2>
           <div className="flex gap-2">
-            {user && (
-              <Button 
-                onClick={handleManageProperties}
-                variant="outline"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
-              >
-                <FileEdit className="mr-2 h-4 w-4" /> Manage Properties
-              </Button>
-            )}
+            <Button 
+              onClick={handleManageProperties}
+              variant="outline"
+              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              <FileEdit className="mr-2 h-4 w-4" /> Manage Properties
+            </Button>
             <Button 
               onClick={handleUploadProperty}
               className="bg-green-600 hover:bg-green-700 text-white"
