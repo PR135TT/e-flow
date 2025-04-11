@@ -1,10 +1,10 @@
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Search, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchDropdown } from "./SearchDropdown";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "@/App";
 
 interface SearchBarProps {
   searchQuery: string;
@@ -22,12 +22,11 @@ export const SearchBar = ({
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const searchFormRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   
   useEffect(() => {
-    // Show dropdown if user has typed at least 2 characters
     setIsDropdownVisible(searchQuery.length >= 2);
     
-    // Click outside listener to close dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (searchFormRef.current && !searchFormRef.current.contains(event.target as Node)) {
         setIsDropdownVisible(false);
@@ -84,12 +83,14 @@ export const SearchBar = ({
             </Button>
           </form>
           
-          <Button 
-            onClick={handleUploadProperty}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
-          </Button>
+          {user && (
+            <Button 
+              onClick={handleUploadProperty}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
+            </Button>
+          )}
         </div>
         
         <div className="text-sm text-white/80 mt-2">

@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, PlusCircle } from "lucide-react";
@@ -9,6 +8,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { SearchDropdown } from "@/components/properties/SearchDropdown";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AuthContext } from "@/App";
 
 export const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,12 +16,11 @@ export const HeroSection = () => {
   const searchFormRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    // Show dropdown if user has typed at least 2 characters
     setIsDropdownVisible(searchQuery.length >= 2);
     
-    // Click outside listener to close dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (searchFormRef.current && !searchFormRef.current.contains(event.target as Node)) {
         setIsDropdownVisible(false);
@@ -104,12 +103,14 @@ export const HeroSection = () => {
                 <Search className="mr-2 h-4 w-4" /> {isMobile ? "Search" : "Search Properties"}
               </Button>
             </form>
-            <Button 
-              onClick={handleUploadProperty}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" /> {isMobile ? "Upload" : "Upload Property"}
-            </Button>
+            {user && (
+              <Button 
+                onClick={handleUploadProperty}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> {isMobile ? "Upload" : "Upload Property"}
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -58,21 +58,23 @@ export const FeaturedProperties = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <h2 className="text-3xl font-bold mb-4 md:mb-0">Featured Properties</h2>
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleManageProperties}
-              variant="outline"
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
-            >
-              <FileEdit className="mr-2 h-4 w-4" /> Manage Properties
-            </Button>
-            <Button 
-              onClick={handleUploadProperty}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
-            </Button>
-          </div>
+          {user && (
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleManageProperties}
+                variant="outline"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <FileEdit className="mr-2 h-4 w-4" /> Manage Properties
+              </Button>
+              <Button 
+                onClick={handleUploadProperty}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> Upload Property
+              </Button>
+            </div>
+          )}
         </div>
         {isLoading ? (
           <div className="flex justify-center items-center h-48">
